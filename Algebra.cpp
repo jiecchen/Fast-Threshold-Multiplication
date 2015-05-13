@@ -2,36 +2,6 @@
 #include <iomanip>
 #include <algorithm>
 
-// Matrix_CSC::Matrix_CSC(Element *arr, int _nnz, int _m,  int _n) {
-//   this->values = new int[_nnz];
-//   this->row_ind = new int[_nnz];
-//   this->col_ptr = new int[_n];
-//   this->n = _n;
-//   this->m = _m;
-//   this->nnz = _nnz;
-
-//   bool marked[_n];
-//   std::fill(marked, marked + _n, false);
-
-//   for (int i = 0; i < _nnz; ++i) {
-//     int col = arr->col;
-//     int row = arr->row;
-//     values[i] = arr->val;
-//     row_ind[i] = row;
-//     if (!marked[col]) {
-//       col_ptr[col] = row;
-//       marked[col] = true;
-//     }
-//     arr++;
-//   }
-// }
-
-
-// std::ostream& operator << (std::ostream &os, const Matrix_CSC &m) {
-//   os << "Hello World!";
-//   return os;
-// }
-
 
 CMatrix_CSR::CMatrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
   this->values = new int[_nnz];
@@ -188,10 +158,10 @@ CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &B, double thresh) {
       vec[C[t].row] = C[t].val;
       ++t;
     }
-    std::cout << "vec: " << vec << std::endl;
+    std::cout << "col = " << col <<" vec: " << vec << std::endl;
     // now I have vec
     CVector res = A * vec;
-    std::cout << "res: " << res << std::endl;
+    std::cout << "col = " << col << " res: " << res << std::endl;
     for (unsigned int i = 0; i < res.size(); ++i)
       if (res[i] > thresh) 
 	coo.push_back(Element(i, col, res[i]));

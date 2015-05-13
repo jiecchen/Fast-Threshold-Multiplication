@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Algebra.h"
-const int M = 3;
+const int M = 4;
 const int N = 4;
 
 
@@ -36,14 +36,16 @@ int main() {
   CVector res = mat * vec;
   std::cout << res << std::endl;
 
-  CMatrix_COO coo = mat.toCOO();
-  coo.sortByRowColumn();
-  std::cout << coo << std::endl;
-  coo.sortByColumnRow();
-  std::cout << coo << std::endl;
-  
-  
+   
 
+  for (int i = 0; i < nnz; ++i) 
+    std::swap(arr[i].row, arr[i].col);
+  
+  CMatrix_COO B(arr, nnz, N, M);
+  B.sortByColumnRow();
+  std::cout << B << std::endl;
+  CMatrix_COO ans = thresh_mult_naive(mat, B, 10);
+  std::cout << ans << std::endl;
 
   return 0;
 }

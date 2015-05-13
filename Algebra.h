@@ -19,8 +19,11 @@ typedef CVector::iterator CVector_iter;
 
 class CMatrix_COO {
 public:
-  CMatrix_COO(): m(0), n(0) {}
+  CMatrix_COO(): m(0), n(0) {};
   CMatrix_COO(int m, int n): m(m), n(n) {};
+  CMatrix_COO(Element *arr, int length, int m, int n): m(m), n(n) {
+    data.assign(arr, arr + length);
+  }
   void sortByColumnRow();
   void sortByRowColumn();
   int size() { return data.size(); }
@@ -76,24 +79,6 @@ CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &coo, double thresh);
 
 // override << for CVector
 std::ostream& operator << (std::ostream & os, CVector &vec);
-
-// class Matrix_CSC {
-// public:
-//   // arr should be sorted, from top-to-bottom, left-to-right
-//   CMatrix_CSC(Element *arr, int _nnz, int _m, int _n);
-//   ~CMatrix_CSC() {
-//     delete[] values;
-//     delete[] row_ind;
-//     delete[] col_ptr;
-//   }
-
-// private:
-//   int m, n; // m by n matrix
-//   int nnz; // # of non-zero entries
-//   int* values;
-//   int* row_ind;
-//   int* col_ptr;
-// };
 
 
 
