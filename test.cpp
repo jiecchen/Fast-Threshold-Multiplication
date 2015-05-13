@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Algebra.h"
+#include <numeric>
 const int M = 4;
 const int N = 4;
 
@@ -24,10 +25,15 @@ int main() {
 	++nnz;
       }
   //  std::cerr << "nnz = " << nnz << std::endl;
-  CMatrix_CSR mat(arr, nnz, M, N);
+  CMatrix_CSR mat(arr, arr + nnz, M, N);
   std::cout << mat << std::endl << std::endl;
-
-
+  int ind[2];
+  ind[0] = 0;
+  ind[1] = 3;
+  //  std::iota(ind.begin(), ind.end(), 1);
+  CVector vsum = mat.sumRows(ind, ind + 2);
+  std::cout << "sum of rows: " << vsum << std::endl;
+  
   CVector vec(N);
   std::fill(vec.begin(), vec.end(), 1);
   vec[0] = 100;
@@ -41,7 +47,7 @@ int main() {
   for (int i = 0; i < nnz; ++i) 
     std::swap(arr[i].row, arr[i].col);
   
-  CMatrix_COO B(arr, nnz, N, M);
+  CMatrix_COO B(arr, arr + nnz, N, M);
   B.sortByColumnRow();
   std::cout << B << std::endl;
   CMatrix_COO ans = thresh_mult_naive(mat, B, 10);
