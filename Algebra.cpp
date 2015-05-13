@@ -36,16 +36,17 @@ Matrix_CSR::Matrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
   this->values = new int[_nnz];
   this->col_ind = new int[_nnz];
   this->row_ptr = new int[_m + 1];
-  row_ptr[_m] = _nnz;
+  std::fill(row_ptr, row_ptr + _m + 1, _nnz);
   this->n = _n;
   this->m = _m;
   this->nnz = _nnz;
 
   bool marked[_m];
-  std::fill(marked, marked + _n, false);
+  std::fill(marked, marked + _m, false);
   
   for (int i = 0; i < _nnz; ++i) {
     int row = arr->row; 
+    std::cerr << "row = " << row << std::endl;
     values[i] = arr->val;
     col_ind[i] = arr->col;
     if (!marked[row]) {
@@ -54,6 +55,18 @@ Matrix_CSR::Matrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
     }
     ++arr;
   }
+
+  std::cerr << "m = " << m << std::endl;
+
+  for (int i = 0; i < nnz; ++i)
+    std::cerr << values[i] << " ";
+  std::cerr << std::endl;
+  for (int i = 0; i < nnz; ++i)
+    std::cerr << col_ind[i] << " ";
+  std::cerr << std::endl;
+  for (int i = 0; i < m; ++i)
+    std::cerr << row_ptr[i] << " ";
+  std::cerr << std::endl;
 }
 
 
