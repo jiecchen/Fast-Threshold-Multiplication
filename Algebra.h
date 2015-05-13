@@ -1,11 +1,9 @@
 #ifndef __ALGEBRA_H__
 #define __ALGEBRA_H__
+#include <vector>
 #include <cstdlib>
 #include <iostream>
 
-typedef struct {
-  int row, col, val;
-} Element;
 
 // class Matrix_CSC {
 // public:
@@ -27,14 +25,28 @@ typedef struct {
 //   int* col_ptr;
 // };
 
-
-
-class Matrix_CSR {
+class Element {
 public:
-  Matrix_CSR(Element *arr, int _nnz, int _m,  int _n);
-  friend std::ostream& operator << (std::ostream &os, const Matrix_CSR &mat);  
+  Element(): row(0), col(0), val(0) {};
+  Element(int row, int col, int val): row(row), col(col), val(val) {};
+  int row, col, val;
+};
 
-  ~Matrix_CSR() {
+typedef std::vector<int> CVector; // dense vector
+typedef CVector::iterator CVector_iter;
+typedef std::vector<Element> CMatrix_COO;
+
+// sparse matrix using CSR format
+class CMatrix_CSR {
+public:
+  CMatrix_CSR(Element *arr, int _nnz, int _m,  int _n);
+
+  // sparse matrix *  dense vector
+  CVector operator *(const CVector &vec);
+  CMatrix_COO toCOO() const;
+  friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
+
+  ~CMatrix_CSR() {
     delete[] values;
     delete[] col_ind;
     delete[] row_ptr;
@@ -47,6 +59,15 @@ private:
   int *col_ind;
   int *row_ptr;
 };
+
+
+
+
+// override << for CVector
+std::ostream& operator << (std::ostream & os, CVector &vec);
+
+
+
 
 #endif
 
