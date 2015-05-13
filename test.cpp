@@ -36,6 +36,15 @@ int main() {
   CVector res = mat * vec;
   std::cout << res << std::endl;
 
+  CMatrix_COO coo = mat.toCOO();
+  coo.sortByRowColumn();
+  std::cout << coo << std::endl;
+  coo.sortByColumnRow();
+  std::cout << coo << std::endl;
+  
+  
+
+
   return 0;
 }
 
