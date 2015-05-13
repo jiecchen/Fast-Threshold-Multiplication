@@ -4,8 +4,7 @@
 
 
 CMatrix_CSR::CMatrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
-  this->values = new int[_nnz];
-  this->col_ind = new int[_nnz];
+  this->col_val = new VectorElement[_nnz];
   this->row_ptr = new int[_m + 1];
   std::fill(row_ptr, row_ptr + _m, -1);
   row_ptr[_m] = _nnz;
@@ -19,8 +18,11 @@ CMatrix_CSR::CMatrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
   
   for (int i = 0; i < _nnz; ++i) {
     int row = arr->row; 
-    values[i] = arr->val;
-    col_ind[i] = arr->col;
+    
+    col_val[i].val = arr->val;
+    col_val[i].ind = arr->col;
+    
+
     if (!marked[row]) {
       row_ptr[row] = i;
       marked[row] = true;
@@ -56,7 +58,7 @@ CVector CMatrix_CSR::operator*(const CVector &vec) {
   while (t < nnz) {
     while (row_ptr[row] < 0) ++row;
     while (t < row_ptr[row]) {
-      result[pre_row] += values[t] * vec[col_ind[t]];
+      result[pre_row] += col_val[t].val * vec[col_val[t].ind];
       ++t;
     }
     pre_row = row;
@@ -74,7 +76,7 @@ CVector CMatrix_CSR::sumRows(Index_iter ibegin, Index_iter iend) {
     while (row_ptr[i] < 0) ++i;
     int t = row_ptr[*it];
     while (t < row_ptr[i]) {
-      res[col_ind[t]] += values[t];
+      res[col_val[t].ind] += col_val[t].val; // values[t];
       ++t;
     }
   }
@@ -90,7 +92,7 @@ CVector CMatrix_CSR::sumRows(int *ibegin, int *iend) {
     while (row_ptr[i] < 0) ++i;
     int t = row_ptr[*it];
     while (t < row_ptr[i]) {
-      res[col_ind[t]] += values[t];
+      res[col_val[t].ind] += col_val[t].val;
       ++t;
     }
   }
@@ -126,7 +128,7 @@ CMatrix_COO CMatrix_CSR::toCOO() const {
   while (t < nnz) {
     while (row_ptr[row] < 0) ++row;
     while (t < row_ptr[row]) {
-      Element e(pre_row, col_ind[t], values[t]);
+      Element e(pre_row, col_val[t].ind, col_val[t].val);
       coo.push_back(e);
       ++t;
     }

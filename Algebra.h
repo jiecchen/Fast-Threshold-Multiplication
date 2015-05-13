@@ -15,6 +15,8 @@ public:
   int row, col, val;
 };
 
+
+// can be used to represent sparse vector
 class VectorElement {
 public:
   VectorElement(): ind(0), val(0) {};
@@ -69,8 +71,7 @@ public:
   friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
 
   ~CMatrix_CSR() {
-    delete[] values;
-    delete[] col_ind;
+    delete[] col_val;
     delete[] row_ptr;
   }
 
@@ -79,8 +80,7 @@ public:
 private:
   int m, n;
   int nnz;
-  int *values;
-  int *col_ind;
+  VectorElement *col_val;
   int *row_ptr;
 };
 
