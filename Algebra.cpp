@@ -1,5 +1,6 @@
 #include "Algebra.h"
 #include <iomanip>
+#include <algorithm>
 
 // Matrix_CSC::Matrix_CSC(Element *arr, int _nnz, int _m,  int _n) {
 //   this->values = new int[_nnz];
@@ -134,11 +135,51 @@ CMatrix_COO CMatrix_CSR::toCOO() const {
 }
 
 
+
+
+
+
+void CMatrix_COO::sortByRowColumn() {
+  std::sort(data.begin(), data.end(), 
+	    [](const Element &a, const Element &b) { return a.row < b.row || (a.row == b.row && a.col < b.col); }
+	    );
+}
+
+void CMatrix_COO::sortByColumnRow() {
+  std::sort(data.begin(), data.end(),
+	    [](const Element &a, const Element &b) { return a.col < b.col || (a.col == b.col && a.row < b.row); }
+	    );
+}
+
+
+
+
 std::ostream& operator << (std::ostream & os, CVector &vec) {
   for (CVector_iter it = vec.begin(); it != vec.end(); ++it)
     os << std::setw(5) << *it;
   return os;
 }
+
+
+std::ostream& operator << (std::ostream & os, CMatrix_COO &coo) {
+  for (auto it = coo.data.begin(); it != coo.data.end(); ++it)
+    os << it->row << ", " << it->col << ", " << it->val << std::endl;
+  return os;
+}
+
+
+
+
+CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &B, double thresh) {
+  CMatrix_COO C = B;
+  CMatrix_COO coo;
+
+  C.sortByColumnRow();
+    
+  return coo;
+}
+
+
 
 
 

@@ -5,25 +5,6 @@
 #include <iostream>
 
 
-// class Matrix_CSC {
-// public:
-//   // arr has to be sorted
-//   Matrix_CSC(Element *arr, int _nnz, int _m, int _n);
-//   Matrix_CSC operator * (const Matrix_CSC &m);
-//   friend std::ostream& operator << (std::ostream &os, const Matrix_CSC &m);  
-//   ~Matrix_CSC() {
-//     delete[] values;
-//     delete[] row_ind;
-//     delete[] col_ptr;
-//   }
-
-// private:
-//   int m, n; // m by n matrix
-//   int nnz; // # of non-zero entries
-//   int* values;
-//   int* row_ind;
-//   int* col_ptr;
-// };
 
 class Element {
 public:
@@ -34,11 +15,33 @@ public:
 
 typedef std::vector<int> CVector; // dense vector
 typedef CVector::iterator CVector_iter;
-typedef std::vector<Element> CMatrix_COO;
+//typedef std::vector<Element> CMatrix_COO;
+
+class CMatrix_COO {
+public:
+  CMatrix_COO(): m(0), n(0) {}
+  CMatrix_COO(int m, int n): m(m), n(n) {};
+  void sortByColumnRow();
+  void sortByRowColumn();
+  int size() { return data.size(); }
+  void push_back(Element &e) { 
+    data.push_back(e); 
+    if (e.row > m)
+      m = e.row;
+    if (e.col > n)
+      n = e.col;
+  }
+  Element operator[] (int i) { return data[i]; }
+  friend std::ostream& operator << (std::ostream & os, CMatrix_COO &coo);
+private:
+  int m, n;
+  std::vector<Element> data;
+};
 
 // sparse matrix using CSR format
 class CMatrix_CSR {
 public:
+  // arr should be sorted, from left-to-right, top-to-bottom
   CMatrix_CSR(Element *arr, int _nnz, int _m,  int _n);
 
   // sparse matrix *  dense vector
@@ -60,11 +63,32 @@ private:
   int *row_ptr;
 };
 
+// naive threshhold-multiplication for matrix_csr * matrix_coo 
+CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CVector &vec, double thresh);
 
 
 
 // override << for CVector
 std::ostream& operator << (std::ostream & os, CVector &vec);
+
+// class Matrix_CSC {
+// public:
+//   // arr should be sorted, from top-to-bottom, left-to-right
+//   CMatrix_CSC(Element *arr, int _nnz, int _m, int _n);
+//   ~CMatrix_CSC() {
+//     delete[] values;
+//     delete[] row_ind;
+//     delete[] col_ptr;
+//   }
+
+// private:
+//   int m, n; // m by n matrix
+//   int nnz; // # of non-zero entries
+//   int* values;
+//   int* row_ind;
+//   int* col_ptr;
+// };
+
 
 
 
