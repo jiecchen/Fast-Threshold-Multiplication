@@ -3,6 +3,9 @@
 #include <vector>
 #include <iostream>
 
+//TODO:
+//  + combine CSC & CSR to create CMatrix type?
+
 
 
 class Element {
@@ -10,6 +13,13 @@ public:
   Element(): row(0), col(0), val(0) {};
   Element(int row, int col, int val): row(row), col(col), val(val) {};
   int row, col, val;
+};
+
+class VectorElement {
+public:
+  VectorElement(): ind(0), val(0) {};
+  VectorElement(int ind, int val): ind(ind), val(val) {};
+  int ind, val;
 };
 
 typedef std::vector<int> CVector; // dense vector
