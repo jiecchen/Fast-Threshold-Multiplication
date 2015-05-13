@@ -65,10 +65,26 @@ CVector CMatrix_CSR::operator*(const CVector &vec) {
   return result;
 }
 
-CVector CMatrix_CSR::sumRows(std::vector<int> ind) {
+CVector CMatrix_CSR::sumRows(Index_iter ibegin, Index_iter iend) {
   //TODO: check if ind legal
   CVector res(this->n);
-  for (auto it = ind.begin(); it != ind.end(); ++it) {
+  for (auto it = ibegin; it != iend; ++it) {
+    if (row_ptr[*it] < 0)  continue;
+    int i = *it + 1;
+    while (row_ptr[i] < 0) ++i;
+    int t = row_ptr[*it];
+    while (t < row_ptr[i]) {
+      res[col_ind[t]] += values[t];
+      ++t;
+    }
+  }
+  return res;
+}
+
+CVector CMatrix_CSR::sumRows(int *ibegin, int *iend) {
+  //TODO: check if ind legal
+  CVector res(this->n);
+  for (auto it = ibegin; it != iend; ++it) {
     if (row_ptr[*it] < 0)  continue;
     int i = *it + 1;
     while (row_ptr[i] < 0) ++i;

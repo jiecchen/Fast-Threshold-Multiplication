@@ -14,6 +14,7 @@ public:
 
 typedef std::vector<int> CVector; // dense vector
 typedef CVector::iterator CVector_iter;
+typedef std::vector<int>::iterator Index_iter;
 //typedef std::vector<Element> CMatrix_COO;
 
 class CMatrix_COO {
@@ -53,7 +54,8 @@ public:
   // sparse matrix *  dense vector
   CVector operator *(const CVector &vec);
   CMatrix_COO toCOO() const;
-  CVector sumRows(std::vector<int> ind); // given indices of rows, return the sum
+  CVector sumRows(Index_iter ibegin, Index_iter iend); // given indices of rows, return the sum
+  CVector sumRows(int *s, int *e);
   friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
 
   ~CMatrix_CSR() {
