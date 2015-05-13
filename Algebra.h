@@ -24,15 +24,19 @@ public:
   void sortByColumnRow();
   void sortByRowColumn();
   int size() { return data.size(); }
-  void push_back(Element &e) { 
+  void push_back(Element e) { 
     data.push_back(e); 
     if (e.row > m)
       m = e.row;
     if (e.col > n)
       n = e.col;
   }
-  Element operator[] (int i) { return data[i]; }
+  Element& operator[] (int i) { return data[i]; }
   friend std::ostream& operator << (std::ostream & os, CMatrix_COO &coo);
+  
+  int get_m() { return m; }
+  int get_n() { return n; }
+  
 private:
   int m, n;
   std::vector<Element> data;
@@ -55,6 +59,8 @@ public:
     delete[] row_ptr;
   }
 
+  int get_m() { return m; }
+  int get_n() { return n; }
 private:
   int m, n;
   int nnz;
@@ -64,7 +70,7 @@ private:
 };
 
 // naive threshhold-multiplication for matrix_csr * matrix_coo 
-CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CVector &vec, double thresh);
+CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &coo, double thresh);
 
 
 

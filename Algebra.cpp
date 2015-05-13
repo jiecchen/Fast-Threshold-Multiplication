@@ -106,9 +106,9 @@ std::ostream& operator << (std::ostream &os,  const CMatrix_CSR &mat) {
   for (int i = 0; i < mat.m; ++i) {
     for (int j = 0; j < mat.n; ++j) 
       if (coo[t].row == i && coo[t].col == j)
-	os << std::setw(5) << coo[t++].val;
+	os << std::setw(9) << coo[t++].val;
       else
-	os << std::setw(5) << 0;
+	os << std::setw(9) << 0;
     if (i + 1 != mat.m)
       os << std::endl;   
   }
@@ -155,8 +155,8 @@ void CMatrix_COO::sortByColumnRow() {
 
 
 std::ostream& operator << (std::ostream & os, CVector &vec) {
-  for (CVector_iter it = vec.begin(); it != vec.end(); ++it)
-    os << std::setw(5) << *it;
+  for (auto it = vec.begin(); it != vec.end(); ++it)
+    os << std::setw(9) << *it;
   return os;
 }
 
@@ -172,10 +172,34 @@ std::ostream& operator << (std::ostream & os, CMatrix_COO &coo) {
 
 CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &B, double thresh) {
   CMatrix_COO C = B;
-  CMatrix_COO coo;
+  //TODO: check
+  CMatrix_COO coo(A.get_m(), B.get_n());
 
   C.sortByColumnRow();
-    
+
+  int t = 0;
+  int col = C[t].col;
+  while (t < C.size()) {
+    //TODO: will it be initialized as 0?
+    CVector vec(A.get_m());
+    std::fill(vec.begin(), vec.end(), 0);
+    // construct a CVector
+    while (C[t].col == col) {
+      vec[C[t].row] = C[t].val;
+      ++t;
+    }
+    std::cout << "vec: " << vec << std::endl;
+    // now I have vec
+    CVector res = A * vec;
+    std::cout << "res: " << res << std::endl;
+    for (unsigned int i = 0; i < res.size(); ++i)
+      if (res[i] > thresh) 
+	coo.push_back(Element(i, col, res[i]));
+
+    if (t < C.size())
+      col = C[t].col;
+  }
+
   return coo;
 }
 
