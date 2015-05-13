@@ -46,19 +46,19 @@ CMatrix_CSR::CMatrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
 }
 
 
-CVector CMatrix_CSR::operator*(const CVector &vec) {
-  if ((int) vec.size() != this->n) 
+CVector operator*(const CMatrix_CSR &mat,  CVector &vec) {
+  if ((int) vec.size() != mat.n) 
     throw "Matrix and vector dimensions are not compatible!";
   
-  CVector result(this->m);
+  CVector result(mat.m);
 
   int t = 0;
   int row = 1;
   int pre_row = 0;
-  while (t < nnz) {
-    while (row_ptr[row] < 0) ++row;
-    while (t < row_ptr[row]) {
-      result[pre_row] += col_val[t].val * vec[col_val[t].ind];
+  while (t < mat.nnz) {
+    while (mat.row_ptr[row] < 0) ++row;
+    while (t < mat.row_ptr[row]) {
+      result[pre_row] += mat.col_val[t].val * vec[mat.col_val[t].ind];
       ++t;
     }
     pre_row = row;

@@ -64,7 +64,7 @@ public:
   CMatrix_CSR(Element *arr, int _nnz, int _m,  int _n);
 
   // sparse matrix *  dense vector
-  CVector operator *(const CVector &vec);
+  friend CVector operator *(const CMatrix_CSR &mat,  CVector &vec);
   CMatrix_COO toCOO() const;
   CVector sumRows(Index_iter ibegin, Index_iter iend); // given indices of rows, return the sum
   CVector sumRows(int *s, int *e);
