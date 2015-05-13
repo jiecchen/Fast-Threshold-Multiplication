@@ -1,7 +1,6 @@
 #ifndef __ALGEBRA_H__
 #define __ALGEBRA_H__
 #include <vector>
-#include <cstdlib>
 #include <iostream>
 
 
@@ -54,6 +53,7 @@ public:
   // sparse matrix *  dense vector
   CVector operator *(const CVector &vec);
   CMatrix_COO toCOO() const;
+  CVector sumRows(std::vector<int> ind); // given indices of rows, return the sum
   friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
 
   ~CMatrix_CSR() {
