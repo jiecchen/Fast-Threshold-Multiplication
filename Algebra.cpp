@@ -3,7 +3,8 @@
 #include <algorithm>
 
 
-CMatrix_CSR::CMatrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
+CMatrix_CSR::CMatrix_CSR(Element *arr_s, Element *arr_e , int _m, int _n) {
+  int _nnz = arr_e - arr_s;
   this->col_val = new VectorElement[_nnz];
   this->row_ptr = new int[_m + 1];
   std::fill(row_ptr, row_ptr + _m, -1);
@@ -16,6 +17,7 @@ CMatrix_CSR::CMatrix_CSR(Element *arr,  int _nnz, int _m, int _n) {
   bool marked[_m];
   std::fill(marked, marked + _m, false);
   
+  Element *arr = arr_s;
   for (int i = 0; i < _nnz; ++i) {
     int row = arr->row; 
     

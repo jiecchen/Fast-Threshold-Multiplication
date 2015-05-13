@@ -33,8 +33,8 @@ class CMatrix_COO {
 public:
   CMatrix_COO(): m(0), n(0) {};
   CMatrix_COO(int m, int n): m(m), n(n) {};
-  CMatrix_COO(Element *arr, int length, int m, int n): m(m), n(n) {
-    data.assign(arr, arr + length);
+  CMatrix_COO(Element *arr_s, Element *arr_e, int m, int n): m(m), n(n) {
+    data.assign(arr_s, arr_e);
   }
   void sortByColumnRow();
   void sortByRowColumn();
@@ -61,7 +61,7 @@ private:
 class CMatrix_CSR {
 public:
   // arr should be sorted, from left-to-right, top-to-bottom
-  CMatrix_CSR(Element *arr, int _nnz, int _m,  int _n);
+  CMatrix_CSR(Element *arr_s, Element *arr_e, int _m,  int _n);
 
   // sparse matrix *  dense vector
   friend CVector operator *(const CMatrix_CSR &mat,  CVector &vec);
