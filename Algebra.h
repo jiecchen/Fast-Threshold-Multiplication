@@ -26,6 +26,21 @@ public:
 };
 
 
+class CDenseMatrix {
+public:
+  CDenseMatrix(int m, int n);
+  CDenseMatrix(int *data, int m, int n);
+  ~CDenseMatrix() {
+    delete[] data;
+  };
+  int get_m() { return m; }
+  int get_n() { return n; }
+  int* get_row(int i) { return data + i * n; }
+private:
+  int m, n;
+  int* data;
+};
+
 // can be used to represent sparse vector
 class VectorElement {
 public:
@@ -61,7 +76,14 @@ public:
   
   int get_m() { return m; }
   int get_n() { return n; }
-  
+  // return transpose
+  CMatrix_COO T() {
+    CMatrix_COO cm = *this;
+    std::swap(cm.m, cm.n);
+    for (auto it = cm.data.begin(); it != cm.data.end(); ++it)
+      std::swap(it->row, it->col);
+    return cm;
+  };
 private:
   int m, n;
   std::vector<Element> data;
@@ -75,12 +97,13 @@ public:
 
   // sparse matrix *  dense vector
   friend CVector operator *(const CMatrix_CSR &mat,  CVector &vec);
+  friend CDenseMatrix operator *(const CMatrix_CSR &mat,  CMatrix_COO &coo);
   CMatrix_COO toCOO() const;
   CVector sumRows(Index_iter ibegin, Index_iter iend); // given indices of rows, return the sum
   CVector sumRows(int *s, int *e);
   friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
   // create list of dyatic count sketches
-  friend DyadicCountMin createDyadicCountMin(double eps, double mu, CMatrix_CSR &P);
+  //  friend DyadicCountMin createDyadicCountMin(double eps, double mu, CMatrix_CSR &P);
   
   ~CMatrix_CSR() {
     delete[] col_val;
@@ -96,6 +119,8 @@ private:
   int *row_ptr;
 };
 
+
+
 // naive threshhold-multiplication for matrix_csr * matrix_coo 
 CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &coo, double thresh);
 
@@ -103,7 +128,11 @@ CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &coo, double thresh);
 
 // override << for CVector
 std::ostream& operator << (std::ostream & os, CVector &vec);
+// override << for CDenseMatrix
+std::ostream& operator << (std::ostream & os, CDenseMatrix &mat);
 
+
+CDenseMatrix operator *(CMatrix_COO &A, CMatrix_COO &B);
 
 
 
