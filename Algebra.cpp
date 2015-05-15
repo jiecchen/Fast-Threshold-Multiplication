@@ -1,7 +1,7 @@
 #include "Algebra.h"
 #include <iomanip>
 #include <algorithm>
-
+#include <ctime>
 
 CMatrix_CSR::CMatrix_CSR(Element *arr_s, Element *arr_e , int _m, int _n) {
   int _nnz = arr_e - arr_s;
@@ -144,7 +144,6 @@ CMatrix_COO CMatrix_CSR::toCOO() const {
 
 
 
-
 void CMatrix_COO::sortByRowColumn() {
   std::sort(data.begin(), data.end(), 
 	    [](const Element &a, const Element &b) { return a.row < b.row || (a.row == b.row && a.col < b.col); }
@@ -213,8 +212,38 @@ CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &B, double thresh) {
 
 
 
+//TODO:
+//  + bugs, when CSR nnz = 0
 
 
+DyadicCountMin createDyadicCountMin(double eps, double mu, CMatrix_CSR &P) {
+  std::srand(time(NULL));
+  DyadicCountMin res;
+  res.w = std::ceil(1. / eps);
+  res.u = std::ceil(log(mu));
+  res.n = P.get_n();
+
+  int *data = new int[res.w * res.u * res.n]();
+  
+  int row = 0;
+  while (P.row_ptr[row] < 0) ++row;
+  int next_row = row + 1;
+  while (P.row_ptr[next_row] < 0) ++next_row;
+
+  while (row < P.get_m()) {
+    for (int i = 0; i < res.u; ++i) {
+      int r = std::rand() % res.w + i * res.w; // row of S
+      for (int t = P.row_ptr[row]; t < P.row_ptr[next_row]; ++t) 
+	data[r * res.n + P.col_val[t].ind] += P.col_val[t].val;
+    }
+    row = next_row;
+    next_row++;
+    if (next_row < P.get_m())
+      while (P.row_ptr[next_row] < 0) ++next_row;
+  }
+  res.sketches.push_back(data);
+  return res;
+}
 
 
 

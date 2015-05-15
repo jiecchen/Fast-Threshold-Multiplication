@@ -8,6 +8,16 @@
 
 
 
+class DyadicCountMin {
+public:
+  ~DyadicCountMin() {
+    for (auto it = sketches.begin(); it != sketches.end(); ++it)
+      delete[] *it;
+  }
+  std::vector<int*> sketches;
+  int w, u, n;
+};
+
 class Element {
 public:
   Element(): row(0), col(0), val(0) {};
@@ -35,7 +45,7 @@ public:
   CMatrix_COO(int m, int n): m(m), n(n) {};
   CMatrix_COO(Element *arr_s, Element *arr_e, int m, int n): m(m), n(n) {
     data.assign(arr_s, arr_e);
-  }
+  };
   void sortByColumnRow();
   void sortByRowColumn();
   int size() { return data.size(); }
@@ -69,7 +79,9 @@ public:
   CVector sumRows(Index_iter ibegin, Index_iter iend); // given indices of rows, return the sum
   CVector sumRows(int *s, int *e);
   friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
-
+  // create list of dyatic count sketches
+  friend DyadicCountMin createDyadicCountMin(double eps, double mu, CMatrix_CSR &P);
+  
   ~CMatrix_CSR() {
     delete[] col_val;
     delete[] row_ptr;
@@ -97,6 +109,7 @@ std::ostream& operator << (std::ostream & os, CVector &vec);
 
 
 #endif
+
 
 
 
