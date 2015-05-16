@@ -8,16 +8,7 @@
 
 
 
-class DyadicCountMin {
-public:
-  ~DyadicCountMin() {
-    for (auto it = sketches.begin(); it != sketches.end(); ++it)
-      delete[] *it;
-  }
-  std::vector<int*> sketches;
-  int w, u, n;
-};
-
+////////////////////////////////////////////////////////////////////////////////
 class Element {
 public:
   Element(): row(0), col(0), val(0) {};
@@ -26,11 +17,14 @@ public:
 };
 
 
+
+////////////////////////////////////////////////////////////////////////////////
 class CDenseMatrix {
 public:
   CDenseMatrix(int m, int n);
   CDenseMatrix(int *data, int m, int n);
   ~CDenseMatrix() {
+    //TODO: add it back, memory leak otherwise
     delete[] data;
   };
   int get_m() { return m; }
@@ -41,6 +35,9 @@ private:
   int* data;
 };
 
+
+
+////////////////////////////////////////////////////////////////////////////////
 // can be used to represent sparse vector
 class VectorElement {
 public:
@@ -54,6 +51,12 @@ typedef CVector::iterator CVector_iter;
 typedef std::vector<int>::iterator Index_iter;
 //typedef std::vector<Element> CMatrix_COO;
 
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 class CMatrix_COO {
 public:
   CMatrix_COO(): m(0), n(0) {};
@@ -89,6 +92,10 @@ private:
   std::vector<Element> data;
 };
 
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 // sparse matrix using CSR format
 class CMatrix_CSR {
 public:
@@ -121,9 +128,26 @@ private:
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+struct CountMinSketch {
+  int recover(int cood);
+  ~CountMinSketch() {
+    delete hash;
+    delete[] cm;
+  }
+  int w, u;
+  CMatrix_COO* hash;
+  int *cm;
+};
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 // naive threshhold-multiplication for matrix_csr * matrix_coo 
 CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &coo, double thresh);
 
+CountMinSketch createCountMin(CountMinSketch &sk, double eps, int u, CMatrix_COO &coo);
 
 
 // override << for CVector

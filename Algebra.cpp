@@ -31,21 +31,12 @@ CMatrix_CSR::CMatrix_CSR(Element *arr_s, Element *arr_e , int _m, int _n) {
     }
     ++arr;
   }
-
-
-  // // debug
-  // std::cerr << "m = " << m << std::endl;
-
-  // for (int i = 0; i < nnz; ++i)
-  //   std::cerr << values[i] << " ";
-  // std::cerr << std::endl;
-  // for (int i = 0; i < nnz; ++i)
-  //   std::cerr << col_ind[i] << " ";
-  // std::cerr << std::endl;
-  // for (int i = 0; i < m; ++i)
-  //   std::cerr << row_ptr[i] << " ";
-  // std::cerr << std::endl;
 }
+
+
+
+
+
 
 
 CVector operator*(const CMatrix_CSR &mat,  CVector &vec) {
@@ -69,6 +60,9 @@ CVector operator*(const CMatrix_CSR &mat,  CVector &vec) {
   return result;
 }
 
+
+
+
 CVector CMatrix_CSR::sumRows(Index_iter ibegin, Index_iter iend) {
   //TODO: check if ind legal
   CVector res(this->n);
@@ -84,6 +78,9 @@ CVector CMatrix_CSR::sumRows(Index_iter ibegin, Index_iter iend) {
   }
   return res;
 }
+
+
+
 
 CVector CMatrix_CSR::sumRows(int *ibegin, int *iend) {
   //TODO: check if ind legal
@@ -120,6 +117,9 @@ std::ostream& operator << (std::ostream &os,  const CMatrix_CSR &mat) {
   }
   return os;
 }
+
+
+
 
 
 CMatrix_COO CMatrix_CSR::toCOO() const {
@@ -172,6 +172,19 @@ std::ostream& operator << (std::ostream & os, CMatrix_COO &coo) {
   return os;
 }
 
+std::ostream& operator << (std::ostream & os, CDenseMatrix &mat) {
+  for (int i = 0; i < mat.get_m(); ++i) {
+    int *data = mat.get_row(i);
+    for (int j = 0; j < mat.get_n(); ++j) 
+      os << std::setw(9) << data[j];
+    os << std::endl;
+  }
+  return os;
+}
+
+
+
+
 
 
 // complexity \prop  nnz(A) * B.n
@@ -210,6 +223,8 @@ CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &B, double thresh) {
 }
 
 
+
+// complexity \prop h * nnz(B)
 CDenseMatrix operator *(CMatrix_COO &A, CMatrix_COO &B) {
   int *data = new int[A.get_m() * B.get_n()]();
   int v[A.get_n()];
@@ -227,7 +242,7 @@ CDenseMatrix operator *(CMatrix_COO &A, CMatrix_COO &B) {
       ++t;
     }
     CVector cv = CVector(v, v + A.get_n());
-    std::cout << "row = " << row << " v = " << cv  << std::endl;
+    //    std::cout << "row = " << row << " v = " << cv  << std::endl;
 
     // calculate v' * B
     for (int i = 0; i < B.size(); i++)
@@ -242,64 +257,39 @@ CDenseMatrix operator *(CMatrix_COO &A, CMatrix_COO &B) {
 }
 
 
+// same as the operator *, but return a int*
+int* coo_mult(CMatrix_COO &A, CMatrix_COO &B) {
+  int *data = new int[A.get_m() * B.get_n()]();
+  int v[A.get_n()];
+  A.sortByRowColumn();
+  //  B.sortByColumnRow();
+  int t = 0;
+  int row = A[t].row;
+  while (t < A.size()) {
+    // construct the row of A
+    std::fill(v, v + A.get_n(), 0);
+    v[A[t].col] = A[t].val;
+    ++t;
+    while (t < A.size() && A[t-1].row == A[t].row) {
+      v[A[t].col] = A[t].val;
+      ++t;
+    }
+    CVector cv = CVector(v, v + A.get_n());
+    //    std::cout << "row = " << row << " v = " << cv  << std::endl;
 
-std::ostream& operator << (std::ostream & os, CDenseMatrix &mat) {
-  for (int i = 0; i < mat.get_m(); ++i) {
-    int *data = mat.get_row(i);
-    for (int j = 0; j < mat.get_n(); ++j) 
-      os << std::setw(9) << data[j];
-    os << std::endl;
+    // calculate v' * B
+    for (int i = 0; i < B.size(); i++)
+      data[row * B.get_n() + B[i].col] += B[i].val * v[B[i].row];
+    
+
+    if (t < A.size())
+      row = A[t].row;
+        
   }
-  return os;
+  return data;
 }
 
 
-// // complexity \prop nnz(C)
-// CDenseMatrix operator *(const CMatrix_CSR &mat,  CMatrix_COO &C) {
-
-//   auto data = new int[mat.m][C.get_n()](); // to keep result
-//   C.sortByColumnRow();
-
-//   for (int col = 0; col < C.get_n(); ++col) {
-    
-//   }
-  
-// }
-
-
-
-//TODO:
-//  + bugs, when CSR nnz = 0
-
-
-// DyadicCountMin createDyadicCountMin(double eps, double mu, CMatrix_CSR &P) {
-//   std::srand(time(NULL));
-//   DyadicCountMin res;
-//   res.w = std::ceil(1. / eps);
-//   res.u = std::ceil(log(mu));
-//   res.n = P.get_n();
-
-//   int *data = new int[res.w * res.u * res.n]();
-  
-//   int row = 0;
-//   while (P.row_ptr[row] < 0) ++row;
-//   int next_row = row + 1;
-//   while (P.row_ptr[next_row] < 0) ++next_row;
-
-//   while (row < P.get_m()) {
-//     for (int i = 0; i < res.u; ++i) {
-//       int r = std::rand() % res.w + i * res.w; // row of S
-//       for (int t = P.row_ptr[row]; t < P.row_ptr[next_row]; ++t) 
-// 	data[r * res.n + P.col_val[t].ind] += P.col_val[t].val;
-//     }
-//     row = next_row;
-//     next_row++;
-//     if (next_row < P.get_m())
-//       while (P.row_ptr[next_row] < 0) ++next_row;
-//   }
-//   res.sketches.push_back(data);
-//   return res;
-// }
 
 
 
@@ -307,6 +297,23 @@ std::ostream& operator << (std::ostream & os, CDenseMatrix &mat) {
 
 
 
+
+
+void createCountMin(CountMinSketch &sk, double eps, int _u, CMatrix_COO &coo) {
+  std::srand(time(NULL));
+  sk.w = std::ceil(1. / eps);
+  sk.u = _u;
+  int h = sk.w * sk.u;
+  CMatrix_COO* cm =  new CMatrix_COO(h, coo.get_m());
+  std::cout << "w = " << w << " u = " << u << " n = " << coo.get_m() << std::endl; 
+  for (int i = 0; i < coo.get_m(); ++i) 
+    for (int j = 0; j < u; ++j) 
+      cm->push_back(Element(std::rand() % w + j * w, i, 1));
+  // get the sketch of the coo
+  //  std::cout << "I  am here" << std::endl;
+  sk.hash = cm;
+  sk.cm = coo_mult(cm, coo);
+}
 
 
 
