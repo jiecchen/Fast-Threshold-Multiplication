@@ -25,35 +25,11 @@ int main() {
 	arr[nnz].val = A[i][j];
 	++nnz;
       }
-  // //  std::cerr << "nnz = " << nnz << std::endl;
-  // CMatrix_CSR mat(arr, arr + nnz, M, N);
-  // std::cout << mat << std::endl << std::endl;
-  // int ind[2];
-  // ind[0] = 0;
-  // ind[1] = 3;
-  // //  std::iota(ind.begin(), ind.end(), 1);
-  // CVector vsum = mat.sumRows(ind, ind + 2);
-  // std::cout << "sum of rows: " << vsum << std::endl;
-  
-  // CVector vec(N);
-  // std::fill(vec.begin(), vec.end(), 1);
-  // vec[0] = 100;
-  // vec[3] = -2;
-  // std::cout << vec << std::endl;
-  // CVector res = mat * vec;
-  // std::cout << res << std::endl;
-
-   
-
-  // for (int i = 0; i < nnz; ++i) 
-  //   std::swap(arr[i].row, arr[i].col);
    
 
   CMatrix_COO B(arr, arr + nnz, N, M);
   std::cout << "B = \n" << B << std::endl;
   
-  CountMinSketch sk;
-  createCountMin(sk, 0.1, 5, B);
 
   return 0;
 }

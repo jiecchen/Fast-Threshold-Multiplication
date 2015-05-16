@@ -6,6 +6,7 @@
 //TODO:
 //  + combine CSC & CSR to create CMatrix type?
 
+int const INFINITY = 10000000;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,14 +33,17 @@ public:
 typedef std::vector<int> CVector; // dense vector
 typedef CVector::iterator CVector_iter;
 typedef std::vector<int>::iterator Index_iter;
-//typedef std::vector<Element> CMatrix_COO;
+typedef std::vector<VectorElement> SparseVector;
+typedef std::vector<VectorElement>::iterator SparseVector_iter;
 
 
 
 
 
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////// CMatrix_COO ////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
 class CMatrix_COO {
 public:
   CMatrix_COO(): m(0), n(0) {};
@@ -75,11 +79,37 @@ private:
   std::vector<Element> data;
 };
 
+// multiplication for coo format
+// return an int* as a result
+// complexity O(nnz(B) * A.m)
+int* coo_mult(CMatrix_COO &A, CMatrix_COO &B);
 
 
 
+/////////////////////////////////////////////////////////////////////////
+/////////////////////// Sketch Related //////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+class MatrixSketch {
+public:
+  ~MatrixSketch() {
+    delete[] data;
+    delete hash;
+  };
+  int w, u; // h = w * u
+  int n;
+  CMatrix_COO *hash;
+  int *data; // will be h * n
+};
 
-
+// MatrixSketch * Vector -> CountMinSketch
+// sketching a coo matrix
+// keep result in MatrixSketch
+void sketchMatrixCOO(MatrixSketch &sk, double eps, int u, CMatrix_COO &B);
+// return int* as count min sketch of the vector specfied by it_s -> it_e
+// remember to release the memory
+int* sketchVector(MatrixSketch &sk, SparseVector_iter it_s, SparseVector_iter it_e);
+// recover the coordinate given sketch and hash
+int recover(int *cm, const MatrixSketch &sk, int coor);
 
 #endif
 
