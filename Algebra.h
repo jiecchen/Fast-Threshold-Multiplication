@@ -18,23 +18,6 @@ public:
 
 
 
-////////////////////////////////////////////////////////////////////////////////
-class CDenseMatrix {
-public:
-  CDenseMatrix(int m, int n);
-  CDenseMatrix(int *data, int m, int n);
-  ~CDenseMatrix() {
-    //TODO: add it back, memory leak otherwise
-    delete[] data;
-  };
-  int get_m() { return m; }
-  int get_n() { return n; }
-  int* get_row(int i) { return data + i * n; }
-private:
-  int m, n;
-  int* data;
-};
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,69 +77,6 @@ private:
 
 
 
-
-////////////////////////////////////////////////////////////////////////////////
-// sparse matrix using CSR format
-class CMatrix_CSR {
-public:
-  // arr should be sorted, from left-to-right, top-to-bottom
-  CMatrix_CSR(Element *arr_s, Element *arr_e, int _m,  int _n);
-
-  // sparse matrix *  dense vector
-  friend CVector operator *(const CMatrix_CSR &mat,  CVector &vec);
-  friend CDenseMatrix operator *(const CMatrix_CSR &mat,  CMatrix_COO &coo);
-  CMatrix_COO toCOO() const;
-  CVector sumRows(Index_iter ibegin, Index_iter iend); // given indices of rows, return the sum
-  CVector sumRows(int *s, int *e);
-  friend std::ostream& operator << (std::ostream &os, const CMatrix_CSR &mat);  
-  // create list of dyatic count sketches
-  //  friend DyadicCountMin createDyadicCountMin(double eps, double mu, CMatrix_CSR &P);
-  
-  ~CMatrix_CSR() {
-    delete[] col_val;
-    delete[] row_ptr;
-  }
-
-  int get_m() { return m; }
-  int get_n() { return n; }
-private:
-  int m, n;
-  int nnz;
-  VectorElement *col_val;
-  int *row_ptr;
-};
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-struct CountMinSketch {
-  int recover(int cood);
-  ~CountMinSketch() {
-    delete hash;
-    delete[] cm;
-  }
-  int w, u;
-  CMatrix_COO* hash;
-  int *cm;
-};
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// naive threshhold-multiplication for matrix_csr * matrix_coo 
-CMatrix_COO thresh_mult_naive(CMatrix_CSR &A, CMatrix_COO &coo, double thresh);
-
-CountMinSketch createCountMin(CountMinSketch &sk, double eps, int u, CMatrix_COO &coo);
-
-
-// override << for CVector
-std::ostream& operator << (std::ostream & os, CVector &vec);
-// override << for CDenseMatrix
-std::ostream& operator << (std::ostream & os, CDenseMatrix &mat);
-
-
-CDenseMatrix operator *(CMatrix_COO &A, CMatrix_COO &B);
 
 
 
