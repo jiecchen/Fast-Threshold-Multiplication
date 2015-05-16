@@ -2,7 +2,7 @@
 #include "Algebra.h"
 #include <numeric>
 #include <iomanip>
-const int M = 4;
+const int M = 10;
 const int N = 4;
 
 
@@ -15,6 +15,7 @@ int main() {
   A[2][2] = 12;
   A[3][0] = 2;
   A[3][2] = 2;
+  A[7][1] = 100;
   Element arr[M * N];
   int nnz = 0;
   for (int i = 0; i < M; ++i)
@@ -27,12 +28,29 @@ int main() {
       }
    
 
-  CMatrix_COO B(arr, arr + nnz, N, M);
+  CMatrix_COO B(arr, arr + nnz, M, N);
   std::cout << "B = \n" << B << std::endl;
   
+  MatrixSketch sk;
+  sketchMatrixCOO(sk, 0.05, 5, B);
+  
+  SparseVector vec;
+  vec.push_back(VectorElement(1, 10));
+  vec.push_back(VectorElement(2, 100));
+  vec.push_back(VectorElement(3, 500));
+
+
+  
+  int *cm = sketchVector(sk, vec.begin(), vec.end());
+  for (int i  = 0; i < M; i++) 
+    std::cout << recover(cm, sk, i) << std::endl;
 
   return 0;
 }
+
+
+
+
 
 
 
