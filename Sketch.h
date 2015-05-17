@@ -11,6 +11,9 @@ class MatrixSketch {
 public:
  /* MatrixSketch(int w, int u, int n, CMatrix_COO* hash, int* data): */
  /*  w(w), u(u), n(n), hash(hash), data(data) {} */
+
+  //TODO:
+  //  + resolve the memory leak issue
   ~MatrixSketch() {
     delete[] data;
     delete hash;
@@ -24,8 +27,24 @@ public:
 
 
 // sketch to keep the dyadic structure
-typedef std::vector<MatrixSketch> DyadicSketch;
-typedef std::vector<MatrixSketch>::iterator DyadicSketch_iter;
+typedef std::vector<MatrixSketch *> DyadicSketch;
+typedef std::vector<MatrixSketch *>::iterator DyadicSketch_iter;
+
+class CDyadicSketch {
+public:
+  ~CDyadicSketch() {
+    for (auto it = sk.begin(); it != sk.end(); ++it)
+      delete *it;
+  }
+  void push_back(MatrixSketch *p) {
+    sk.push_back(p);
+  }
+  int size() { return sk.size(); }
+  void clear() { sk.clear(); }
+  MatrixSketch* operator[] (int i) { return sk[i]; }
+private:
+  DyadicSketch sk;
+};
 
 
 
@@ -46,6 +65,9 @@ int recover(int *cm, const MatrixSketch &sk, int coor);
 // newCoo is empty
 void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo);
 
+// create a dyadic structure for B
+// keep in dyadic
+void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B);
 
 
 

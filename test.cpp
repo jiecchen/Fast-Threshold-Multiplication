@@ -52,10 +52,36 @@ int main() {
   vec.push_back(VectorElement(3, 500));
 
 
+  // try to construct a dyadic structure
+  // and do recovering
+  CDyadicSketch dyadic;
+  dyadicSketch(dyadic, 0.1, 5, B);
+  std::vector<int>  ind[MAX_LOGN];
+  ind[0].push_back(0);
+  int thresh = 5000;
+  std::vector<int> result(B.get_m());
+  for (int i = 0; i < dyadic.size(); ++i) {
+    int *cm = sketchVector(*dyadic[i], vec.begin(), vec.end());
+    for (auto it = ind[i].begin(); it != ind[i].end(); ++it) {
+      int v = recover(cm, *dyadic[i], *it); 
+      if (v > thresh) {
+	ind[i + 1].push_back((*it) * 2);
+	ind[i + 1].push_back((*it) * 2 + 1);
+	if (i + 1 == dyadic.size()) { // last level
+	  result[*it] = v;
+	}
+      }
+    }
+    delete[] cm; 
+  }
   
-  int *cm = sketchVector(sk, vec.begin(), vec.end());
-  for (int i  = 0; i < M; i++) 
-    std::cout << recover(cm, sk, i) << std::endl;
+  for (int i = 0; i < B.get_m(); ++i)
+    std::cout << std::setw(5) << result[i];
+  std::cout << std::endl;
+  
+  // int *cm = sketchVector(sk, vec.begin(), vec.end());
+  // for (int i  = 0; i < M; i++) 
+  //   std::cout << recover(cm, sk, i) << std::endl;
 
   return 0;
 }

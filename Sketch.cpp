@@ -77,26 +77,28 @@ void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo) {
 
 // create O(log m) matrix sketches, form as
 // dyadic sketch
-// B has to be sorted by ColumnRow
-void dyadicSketch(DyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B) {
+void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B) {
   dyadic.clear();
   CMatrix_COO coo[MAX_LOGN];
   coo[0] = B;
-  
+  coo[0].sortByColumnRow();
   int t = 0;
   //TODO:
   //  + bugs, if coo[t].size() == 0
-  while (coo[t].size() > 1) {
+  std::cout << "coo[" << t << "]: 0 \n" << coo[0] << std::endl;
+  while (coo[t].get_m() > 1) {
     mergeNeighbor(coo[t + 1], coo[t]);
     t++;
+    std::cout << "coo[" << t << "]: " << coo[t].get_m() << "\n" << coo[t] << std::endl;
   }
-  
   while (t >= 0) {
-    MatrixSketch sk;
-    sketchMatrixCOO(sk, eps, u, coo[t--]);
+    MatrixSketch *sk = new MatrixSketch();
+    sketchMatrixCOO(*sk, eps, u, coo[t--]);
     dyadic.push_back(sk);
   }
 }
+
+
 
 
 
