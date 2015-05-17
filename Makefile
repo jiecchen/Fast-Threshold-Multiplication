@@ -13,14 +13,18 @@ TARGET = test
 RM = rm -f
 
 
-all: test.o Algebra.o
+all: test.o Algebra.o Sketch.o
 	$(CC) $(CFLAGS) -o test *.o
 
-$(TARGET).o: $(TARGET).cpp Algebra.h
-	$(CC) $(CFLAGS) -c $(TARGET).cpp Algebra.h
+$(TARGET).o: $(TARGET).cpp Algebra.h Sketch.h
+	$(CC) $(CFLAGS) -c $(TARGET).cpp *.h
 
 Algebra.o: Algebra.h Algebra.cpp
 	$(CC) $(CFLAGS) -c Algebra.cpp Algebra.h
+
+
+Sketch.o: Sketch.h Algebra.h Sketch.cpp
+	$(CC) $(CFLAGS) -c Sketch.h Algebra.h Sketch.cpp
 
 clean:
 	$(RM) $(TARGET) *~ *.o *.gch

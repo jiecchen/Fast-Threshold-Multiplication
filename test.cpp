@@ -1,5 +1,6 @@
 #include <iostream>
 #include "Algebra.h"
+#include "Sketch.h"
 #include <numeric>
 #include <iomanip>
 const int M = 10;
