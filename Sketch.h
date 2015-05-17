@@ -69,6 +69,12 @@ void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo);
 // keep in dyadic
 void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B);
 
+// given threshhold, recover all
+// entries in dyadic(vec_s, vec_e)
+// approximately recover entries in PQ that >= thresh
+// keep in result
+void thresholdRecover(SparseVector &result, CDyadicSketch &dyadic, 
+		      SparseVector_iter vec_s, SparseVector_iter vec_e, double thresh);
 
 
 #endif

@@ -101,6 +101,36 @@ void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B) {
 
 
 
+// given threshhold, recover all
+// entries in dyadic(vec_s, vec_e)
+// approximately recover entries in PQ that >= thresh
+// keep in result
+void thresholdRecover(SparseVector &result, CDyadicSketch &dyadic, 
+		      SparseVector_iter vec_s, SparseVector_iter vec_e, double thresh) {
+  std::vector<int> ind[MAX_LOGN];
+  ind[0].push_back(0);
+  for (int i = 0; i < dyadic.size(); ++i) {
+    int *cm = sketchVector(*dyadic[i], vec_s, vec_e);
+    for (auto it = ind[i].begin(); it != ind[i].end(); ++it) {
+      int v = recover(cm, *dyadic[i], *it); 
+      if (v > thresh) {
+	if (i + 1 < dyadic.size()) {
+	  ind[i + 1].push_back((*it) * 2);
+	  ind[i + 1].push_back((*it) * 2 + 1);
+	}
+	else
+	  result.push_back(VectorElement(*it, v));	
+      }
+    }
+    delete[] cm; 
+  }
+ 
+}
+
+
+
+
+
 
 
 
