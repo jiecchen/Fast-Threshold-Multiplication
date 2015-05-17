@@ -30,8 +30,19 @@ int main() {
    
 
   CMatrix_COO B(arr, arr + nnz, M, N);
+  B.sortByColumnRow();
   std::cout << "B = \n" << B << std::endl;
-  
+
+  CMatrix_COO newCoo;
+  mergeNeighbor(newCoo, B);
+  std::cout << "newCoo =\n" << newCoo << std::endl;
+
+  CMatrix_COO newCoo1;
+  mergeNeighbor(newCoo1, newCoo);
+  std::cout << "newCoo1 =\n" << newCoo1 << std::endl;
+
+
+
   MatrixSketch sk;
   sketchMatrixCOO(sk, 0.05, 5, B);
   

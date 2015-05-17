@@ -2,6 +2,12 @@
 #include "Sketch.h"
 #include <cmath>
 
+//Principle:
+//   + each function only do one thing
+//   + keep simple, keep stupid
+
+
+
 /////////////////////////////////////////////////////////////////////////
 /////////////////////// Sketch Related //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
@@ -49,4 +55,59 @@ int recover(int *cm, const MatrixSketch &sk, int coor) {
   }
   return m;
 }
+
+
+// let oldCoo = [R_0; R_1; R_2; R_3; ...]
+// newCoo = [R_0 + R_1; R_2 + R_3; ...]
+// oldCoo has to be sorted by ColumnRow
+// newCoo is empty
+void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo) {
+  newCoo.set_mn((oldCoo.get_m() + 1) / 2, oldCoo.get_n());
+  if (oldCoo.size() <= 0)
+    return;
+  newCoo.push_back(Element(oldCoo[0].row / 2, oldCoo[0].col, oldCoo[0].val));
+  for (int i = 1; i < oldCoo.size(); ++i)
+    if (oldCoo[i].col == newCoo.back().col &&
+	oldCoo[i].row / 2 == newCoo.back().row) {
+      newCoo.back().val += oldCoo[i].val;
+    }
+    else
+      newCoo.push_back(Element(oldCoo[i].row / 2, oldCoo[i].col, oldCoo[i].val));
+}
+
+// create O(log m) matrix sketches, form as
+// dyadic sketch
+// B has to be sorted by ColumnRow
+void dyadicSketch(DyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B) {
+  dyadic.clear();
+  CMatrix_COO coo[MAX_LOGN];
+  coo[0] = B;
+  
+  int t = 0;
+  //TODO:
+  //  + bugs, if coo[t].size() == 0
+  while (coo[t].size() > 1) {
+    mergeNeighbor(coo[t + 1], coo[t]);
+    t++;
+  }
+  
+  while (t >= 0) {
+    MatrixSketch sk;
+    sketchMatrixCOO(sk, eps, u, coo[t--]);
+    dyadic.push_back(sk);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

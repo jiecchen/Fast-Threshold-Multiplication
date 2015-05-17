@@ -54,6 +54,9 @@ public:
   void sortByColumnRow();
   void sortByRowColumn();
   int size() { return data.size(); }
+  Element & back() {
+    return data.back();
+  }
   void push_back(Element e) { 
     data.push_back(e); 
     if (e.row > m)
@@ -64,6 +67,10 @@ public:
   Element& operator[] (int i) { return data[i]; }
   friend std::ostream& operator << (std::ostream & os, CMatrix_COO &coo);
   
+  void set_mn(int _m, int _n) {
+    m = _m;
+    n = _n;
+  }
   int get_m() { return m; }
   int get_n() { return n; }
   // return transpose
