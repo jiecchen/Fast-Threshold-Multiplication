@@ -105,6 +105,22 @@ void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, doub
 
 
 
+// sum rows of an coo matrix
+void sumRows_Coo(int *result, CMatrix_COO &P) {
+  std::fill(result, result + P.get_n(), 0);
+  for (int i = 0; i < P.size(); ++i)
+    result[P[i].col] += P[i].val;
+}
+
+int inner_prod(int *v, SparseVector &sv) {
+  int res = 0;
+  for (auto it = sv.begin(); it != sv.end(); ++it)
+    res += v[it->ind] * it->val;
+  return res;
+}
+
+
+
 std::ostream& operator << (std::ostream &os,  const SparseVector &vec) {
   for (const VectorElement &elem : vec)
     os << elem.ind << ", " << elem.val << std::endl;
