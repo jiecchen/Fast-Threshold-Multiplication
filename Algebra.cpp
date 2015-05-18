@@ -77,6 +77,15 @@ int* coo_mult(CMatrix_COO &A, CMatrix_COO &B) {
 
 
 
+std::ostream& operator << (std::ostream &os,  const SparseVector &vec) {
+  for (const VectorElement &elem : vec)
+    os << elem.ind << ", " << elem.val << std::endl;
+  return os;
+}
+
+
+
+
 
 
 

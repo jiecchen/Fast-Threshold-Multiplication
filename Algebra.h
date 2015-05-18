@@ -51,6 +51,10 @@ public:
   CMatrix_COO(Element *arr_s, Element *arr_e, int m, int n): m(m), n(n) {
     data.assign(arr_s, arr_e);
   };
+  CMatrix_COO(std::vector<Element>::iterator arr_s, std::vector<Element>::iterator arr_e,
+	      int m, int n): m(m), n(n) {
+    data.assign(arr_s, arr_e);
+  };
   void sortByColumnRow();
   void sortByRowColumn();
   int size() { return data.size(); }
@@ -91,7 +95,7 @@ private:
 // complexity O(nnz(B) * A.m)
 int* coo_mult(CMatrix_COO &A, CMatrix_COO &B);
 
-
+std::ostream& operator << (std::ostream &os,  const SparseVector &vec); 
 
 
 #endif
