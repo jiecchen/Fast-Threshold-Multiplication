@@ -80,8 +80,8 @@ int* coo_mult(CMatrix_COO &A, CMatrix_COO &B) {
 // result = r[r > thresh]
 // note:  P has to be sorted by RowColumn
 void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh) {
-  int v[vec.size()];
-  std::fill(v, v + vec.size(), 0);
+  int v[P.get_n()];
+  std::fill(v, v + P.get_n(), 0);
   for (const VectorElement &it : vec)
     v[it.ind] = it.val;
   int t = 0; 

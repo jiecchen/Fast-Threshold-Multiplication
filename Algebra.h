@@ -6,7 +6,7 @@
 //TODO:
 //  + combine CSC & CSR to create CMatrix type?
 
-int const INFINITY = 10000000;
+int const INFINITY = 100000000;
 
 
 ////////////////////////////////////////////////////////////////////////////////
