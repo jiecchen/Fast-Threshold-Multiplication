@@ -95,6 +95,13 @@ private:
 // complexity O(nnz(B) * A.m)
 int* coo_mult(CMatrix_COO &A, CMatrix_COO &B);
 
+
+// r = P * vec
+// result = r[r > thresh]
+// note:  P has to be sorted by RowColumn
+// complexity O(nnz(P))
+void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh);
+
 std::ostream& operator << (std::ostream &os,  const SparseVector &vec); 
 
 
