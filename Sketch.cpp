@@ -85,11 +85,9 @@ void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B) {
   int t = 0;
   //TODO:
   //  + bugs, if coo[t].size() == 0
-  std::cout << "coo[" << t << "]: 0 \n" << coo[0] << std::endl;
   while (coo[t].get_m() > 1) {
     mergeNeighbor(coo[t + 1], coo[t]);
     t++;
-    std::cout << "coo[" << t << "]: " << coo[t].get_m() << "\n" << coo[t] << std::endl;
   }
   while (t >= 0) {
     MatrixSketch *sk = new MatrixSketch();
