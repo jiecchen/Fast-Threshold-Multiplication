@@ -77,6 +77,11 @@ void thresholdRecover(SparseVector &result, CDyadicSketch &dyadic,
 		      SparseVector_iter vec_s, SparseVector_iter vec_e, double thresh);
 
 
+// P, Q are boolean matrices
+// theta is a threshold > 0
+// rho \in (0, 1) to control the accuracy
+CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho);
+
 #endif
 
 

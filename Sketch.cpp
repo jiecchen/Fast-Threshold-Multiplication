@@ -131,6 +131,70 @@ void thresholdRecover(SparseVector &result, CDyadicSketch &dyadic,
 
 
 
+// P, Q are boolean matrices
+// theta is a threshold > 0
+// rho \in (0, 1) to control the accuracy
+CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho) {
+  CMatrix_COO thresh_R(P.get_m(), Q.get_n());
+
+  P.sortByRowColumn();
+  int sumP[P.get_n()];
+  sumRows_Coo(sumP, P);
+
+
+
+  //assume R = PQ
+  //now calculate ||R||_1
+  int normR = 0;
+  for (int i = 0; i < Q.size(); ++i)
+    normR += sumP[Q[i].row] * Q[i].val;
+  std::cout << "||R|| = " << normR << std::endl;
+
+  double eps = std::sqrt(rho * theta / (normR + 0.0));
+  double K = 1. / eps;
+  std::cout << "eps = " << eps << " K = " << K << std::endl;
+
+  CDyadicSketch dyadic;
+
+  dyadicSketch(dyadic, eps, 20, P);
+  P.sortByRowColumn();
+  Q.sortByColumnRow();
+  int t = 0;
+  while (t < Q.size()) {
+    SparseVector tmp;
+    int current_col = Q[t].col;
+
+    // extract one column from coo format
+    // put the result to tmp
+    tmp.push_back(VectorElement(Q[t].row, Q[t].val));
+    ++t;
+    while (t < Q.size() && Q[t].col == Q[t - 1].col) {
+      tmp.push_back(VectorElement(Q[t].row, Q[t].val));
+      ++t;
+    }
+    
+ 
+    // calculate inner product sumP * tmp
+    double prod = inner_prod(sumP, tmp); 
+    if (prod > K) { // use exact algorithm
+      //TODO
+      SparseVector result;
+      thresholdMult(result, P, tmp, theta);
+      for (auto it = result.begin(); it != result.end(); ++it)
+	thresh_R.push_back(Element(it->ind, current_col, it->val));
+    }
+    else { // use dyadic structure to recover
+      SparseVector result;
+      thresholdRecover(result, dyadic, tmp.begin(), tmp.end(), theta);
+      for (auto it = result.begin(); it != result.end(); ++it)
+	thresh_R.push_back(Element(it->ind, current_col, it->val));
+    }
+
+  }
+
+  return thresh_R;
+  
+}
 
 
 
