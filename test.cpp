@@ -1,84 +1,159 @@
 #include <iostream>
 #include "Algebra.h"
 #include "Sketch.h"
+#include <cmath>
 #include <numeric>
 #include <iomanip>
-const int M = 10;
-const int N = 4;
+
+// sum rows of an coo matrix
+void sumRows_Coo(int *result, CMatrix_COO &P) {
+  for (int i = 0; i < P.size(); ++i)
+    result[P[i].col] += P[i].val;
+}
+
+int inner_prod(int *v, SparseVector &sv) {
+  int res = 0;
+  for (auto it = sv.begin(); it != sv.end(); ++it)
+    res += v[it->ind] * it->val;
+  return res;
+}
+
+
+
+// r = P * vec
+// result = r[r > thresh]
+// note:  P has to be sorted by RowColumn
+void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh) {
+  int v[vec.size()];
+  std::fill(v, v + vec.size(), 0);
+  for (const VectorElement &it : vec)
+    v[it.ind] = it.val;
+  int t = 0; 
+  while (t < P.size()) {
+    int current_row = P[t].row;
+    int prod = 0;
+    prod += P[t].val * v[P[t].col];
+    ++t;
+
+    while (P[t].row == P[t-1].row) {
+      prod += P[t].val * v[P[t].col];
+      ++t;
+    }
+
+    if (prod > thresh) 
+      result.push_back(VectorElement(current_row, prod));    
+  }
+}
+
+
+// P, Q are binary matrices
+// theta is a threshold > 0
+// rho \in (0, 1) to control the accuracy
+CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho) {
+  CMatrix_COO thresh_R;
+  int sumP[P.get_n()];
+  sumRows_Coo(sumP, P);
+  Q.sortByColumnRow();
+  //assume R = PQ
+  //now calculate ||R||_1
+  int normR = 0;
+  for (int i = 0; i < Q.size(); ++i)
+    normR += sumP[Q[i].row] * Q[i].val;
+  double eps = std::sqrt(rho * theta / (normR + 0.0));
+  double K = 1. / eps;
+  
+
+  CDyadicSketch dyadic;
+
+  dyadicSketch(dyadic, eps, 10, P);
+
+  int t = 0;
+  //TODO:
+  //  + bug, when Q.size() == 0
+  while (t < Q.size()) {
+    SparseVector tmp;
+    int current_col = Q[t].col;
+    tmp.push_back(VectorElement(Q[t].row, Q[t].val));
+    ++t;
+    while (t < Q.size() && Q[t].col == Q[t - 1].col) {
+      tmp.push_back(VectorElement(Q[t].row, Q[t].val));
+      ++t;
+    }
+    
+    double prod = inner_prod(sumP, tmp); // inner product
+    P.sortByRowColumn();
+    if (prod > K) { // use exact algorithm
+      //TODO
+      SparseVector result;
+      thresholdMult(result, P, tmp, theta);
+      for (auto it = result.begin(); it != result.end(); ++it)
+	thresh_R.push_back(Element(it->ind, current_col, it->val));
+    }
+    else { // use dyadic structure to recover
+      SparseVector result;
+      thresholdRecover(result, dyadic, tmp.begin(), tmp.end(), theta);
+      for (auto it = result.begin(); it != result.end(); ++it)
+	thresh_R.push_back(Element(it->ind, current_col, it->val));
+    }
+
+  }
+
+  return thresh_R;
+  
+}
+
+
+
+
 
 
 int main() {
-  int A[M][N];
-  std::fill(A[0], A[0] + M * N, 0);
-  A[0][0] = 21;
-  A[1][2] = 2;
-  A[1][3] = 12;
-  A[2][2] = 12;
-  A[3][0] = 2;
-  A[3][2] = 2;
-  A[7][1] = 100;
-  Element arr[M * N];
-  int nnz = 0;
-  for (int i = 0; i < M; ++i)
-    for (int j = 0; j < N; ++j) 
-      if (A[i][j] != 0) {
-	arr[nnz].row = i;
-	arr[nnz].col = j;
-	arr[nnz].val = A[i][j];
-	++nnz;
-      }
-   
+  // read P
+  int M, N;
+  std::cin >> M >> N;
+  int row, col, val;
+  std::vector<Element> arr;
+  while (std::cin >> row >> col >> val) {
+    arr.push_back(Element(row, col, val));
+  }   
 
-  CMatrix_COO B(arr, arr + nnz, M, N);
+  CMatrix_COO B(arr.begin(), arr.end(), M, N);
   B.sortByColumnRow();
   std::cout << "B = \n" << B << std::endl;
-
-  CMatrix_COO newCoo;
-  mergeNeighbor(newCoo, B);
-  std::cout << "newCoo =\n" << newCoo << std::endl;
-
-  CMatrix_COO newCoo1;
-  mergeNeighbor(newCoo1, newCoo);
-  std::cout << "newCoo1 =\n" << newCoo1 << std::endl;
-
-
 
   MatrixSketch sk;
   sketchMatrixCOO(sk, 0.05, 5, B);
   
   SparseVector vec;
-  vec.push_back(VectorElement(1, 10));
-  vec.push_back(VectorElement(2, 100));
-  vec.push_back(VectorElement(3, 500));
+  vec.push_back(VectorElement(0, 500));
+  vec.push_back(VectorElement(1, 100));
+  vec.push_back(VectorElement(2, 10));
+  vec.push_back(VectorElement(3, 55));
 
+  
 
   // try to construct a dyadic structure
   // and do recovering
-  CDyadicSketch dyadic;
-  dyadicSketch(dyadic, 0.1, 10, B);
-  int thresh = 201;
-  SparseVector result;
-  thresholdRecover(result, dyadic, vec.begin(), vec.end(), thresh);
+  // CDyadicSketch dyadic;
+  // dyadicSketch(dyadic, 0.1, 10, B);
+  // int thresh = 201;
+  // SparseVector result;
+  // thresholdRecover(result, dyadic, vec.begin(), vec.end(), thresh);
 
-  // std::vector<int> result(B.get_m());
-  // for (int i = 0; i < dyadic.size(); ++i) {
-  //   int *cm = sketchVector(*dyadic[i], vec.begin(), vec.end());
-  //   for (auto it = ind[i].begin(); it != ind[i].end(); ++it) {
-  //     int v = recover(cm, *dyadic[i], *it); 
-  //     if (v > thresh) {
-  // 	ind[i + 1].push_back((*it) * 2);
-  // 	ind[i + 1].push_back((*it) * 2 + 1);
-  // 	if (i + 1 == dyadic.size()) { // last level
-  // 	  result[*it] = v;
-  // 	}
-  //     }
-  //   }
-  //   delete[] cm; 
-  // }
   
-  for (unsigned int i = 0; i < result.size(); ++i)
-    std::cout << result[i].ind << ", " << result[i].val << std::endl;
-  std::cout << std::endl;
+  // for (unsigned int i = 0; i < result.size(); ++i)
+  //   std::cout << result[i].ind << ", " << result[i].val << std::endl;
+  // std::cout << std::endl;
+
+
+
+  std::cout << B << std::endl;
+  std::cout << vec << std::endl;
+  SparseVector mulRes;
+  B.sortByRowColumn();
+  thresholdMult(mulRes, B, vec, 1);
+  std::cout << mulRes << std::endl;
+
   
   // int *cm = sketchVector(sk, vec.begin(), vec.end());
   // for (int i  = 0; i < M; i++) 
