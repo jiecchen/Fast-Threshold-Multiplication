@@ -49,6 +49,8 @@ int* sketchVector(MatrixSketch &sk, SparseVector_iter it_s, SparseVector_iter it
 int recover(int *cm, const MatrixSketch &sk, int coor) {
   int m = INFINITY;
   CMatrix_COO &hash = *(sk.hash);
+  if (coor * sk.u >= hash.size())
+    return 0;
   for (int i = 0; i < sk.u; ++i) {
     int r = hash[coor * sk.u + i].row;
     m = std::min(cm[r], m);
@@ -148,15 +150,17 @@ CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho
   int normR = 0;
   for (int i = 0; i < Q.size(); ++i)
     normR += sumP[Q[i].row] * Q[i].val;
-  std::cout << "||R|| = " << normR << std::endl;
+  std::cerr << "||R|| = " << normR << std::endl;
 
   double eps = std::sqrt(rho * theta / (normR + 0.0));
   double K = 1. / eps;
-  std::cout << "eps = " << eps << " K = " << K << std::endl;
+  std::cerr << "eps = " << eps << " K = " << K << std::endl;
 
   CDyadicSketch dyadic;
 
+  std::cerr << "Creating dyadic structure ..." << std::endl;
   dyadicSketch(dyadic, eps, 20, P);
+  std::cerr << "Creating dyadic structure DONE" << std::endl;
   P.sortByRowColumn();
   Q.sortByColumnRow();
   int t = 0;
@@ -178,12 +182,14 @@ CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho
     double prod = inner_prod(sumP, tmp); 
     if (prod > K) { // use exact algorithm
       //TODO
+      std::cerr << "use exact algorithm" << std::endl;
       SparseVector result;
       thresholdMult(result, P, tmp, theta);
       for (auto it = result.begin(); it != result.end(); ++it)
 	thresh_R.push_back(Element(it->ind, current_col, it->val));
     }
     else { // use dyadic structure to recover
+      std::cerr << "use dyadic structure" << std::endl;
       SparseVector result;
       thresholdRecover(result, dyadic, tmp.begin(), tmp.end(), theta);
       for (auto it = result.begin(); it != result.end(); ++it)

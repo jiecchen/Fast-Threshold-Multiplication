@@ -42,6 +42,7 @@ public:
   int size() { return sk.size(); }
   void clear() { sk.clear(); }
   MatrixSketch* operator[] (int i) { return sk[i]; }
+
 private:
   DyadicSketch sk;
 };
@@ -81,6 +82,7 @@ void thresholdRecover(SparseVector &result, CDyadicSketch &dyadic,
 // theta is a threshold > 0
 // rho \in (0, 1) to control the accuracy
 CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho);
+
 
 #endif
 
