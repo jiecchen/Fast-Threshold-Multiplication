@@ -7,17 +7,23 @@ CC = g++
 CFLAGS  = -g -Wall -std=c++0x
 
 # the build target executable:
-TARGET = test
+TARGET = test createData
 
 #LIBS = -larmadillo
 RM = rm -f
 
+test: test.o Algebra.o Sketch.o
+	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o
 
-all: test.o Algebra.o Sketch.o
-	$(CC) $(CFLAGS) -o test *.o
 
-$(TARGET).o: $(TARGET).cpp Algebra.h Sketch.h
-	$(CC) $(CFLAGS) -c $(TARGET).cpp *.h
+createData: createData.o Algebra.o
+	$(CC) $(CFLAGS) -o createData createData.o Algebra.o
+
+createData.o: createData.cpp Algebra.h
+	$(CC) $(CFLAGS) -c createData.cpp *.h
+
+test.o: test.cpp Algebra.h Sketch.h
+	$(CC) $(CFLAGS) -c test.cpp *.h
 
 Algebra.o: Algebra.h Algebra.cpp
 	$(CC) $(CFLAGS) -c Algebra.cpp Algebra.h
