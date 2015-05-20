@@ -43,10 +43,11 @@ int main() {
   std::cout << "P = \n" << P << std::endl;
   std::cout << "Q = \n" << Q << std::endl;
 
-  double theta = 4.9;
+  double theta = 2;
   double rho = 0.1;
   CMatrix_COO result = atLeastMult(P, Q, theta, rho);
   std::cout << "PQ = \n" << result << std::endl;
+  result.print();
 
   
 
