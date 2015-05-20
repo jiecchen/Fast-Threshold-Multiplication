@@ -130,6 +130,13 @@ std::ostream& operator << (std::ostream &os,  const SparseVector &vec) {
 
 
 
+bool operator < (const Element &lh, const Element &rh) {
+  return lh.row < rh.row || (lh.row == rh.row && lh.col < rh.col);
+}
+
+bool operator ==(const Element &lh, const Element &rh) {
+  return lh.row == rh.row && lh.col == rh.col && lh.val == rh.val;
+}
 
 
 

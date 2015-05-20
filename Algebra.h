@@ -17,8 +17,8 @@ public:
   int row, col, val;
 };
 
-
-
+bool operator < (const Element &lh, const Element &rh);
+bool operator == (const Element &lh, const Element &rh);
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +70,10 @@ public:
   }
   Element& operator[] (int i) { return data[i]; }
   friend std::ostream& operator << (std::ostream & os, CMatrix_COO &coo);
-  
+  void print() {
+    for (const Element &e: data) 
+      std::cout << e.row << " " << e.col << " " << e.val << std::endl;
+  }
   void set_mn(int _m, int _n) {
     m = _m;
     n = _n;
