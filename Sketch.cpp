@@ -152,9 +152,9 @@ CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho
     normR += sumP[Q[i].row] * Q[i].val;
   std::cerr << "||R|| = " << normR << std::endl;
 
-  double eps = std::sqrt(rho * theta / (normR + 0.0));
-  double K = 1. / eps;
-  std::cerr << "eps = " << eps << " K = " << K << std::endl;
+  double W = std::sqrt(normR * theta * rho);
+  double eps = rho * theta / W;
+  std::cerr << "eps = " << eps << " W = " << W << std::endl;
 
   CDyadicSketch dyadic;
 
@@ -177,10 +177,13 @@ CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho
       ++t;
     }
     
- 
+    
+    //DEBUG
+    //  W = 0;
+
     // calculate inner product sumP * tmp
     double prod = inner_prod(sumP, tmp); 
-    if (prod > K) { // use exact algorithm
+    if (prod > W) { // use exact algorithm
       //TODO
       std::cerr << "use exact algorithm" << std::endl;
       SparseVector result;
