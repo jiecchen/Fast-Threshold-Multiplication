@@ -39,6 +39,29 @@ typedef std::vector<VectorElement>::iterator SparseVector_iter;
 
 
 
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////// CMatrix_CSC ////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// once created, can not change
+
+class CMatrix_CSC {
+public:
+  // arr should be sorted, from  top-to-bottom, left-to-right
+  CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
+  ~CMatrix_CSC() {
+    delete[] val;
+    delete[] row;
+    delete[] col_ptr;
+  };
+  int m, n;
+  int nnz;
+  int *val;
+  int *row;
+  int *col_ptr;
+};
+
+
+void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
 
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////// CMatrix_COO ////////////////////////////////////////

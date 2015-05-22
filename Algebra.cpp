@@ -2,6 +2,49 @@
 #include <iomanip>
 #include <algorithm>
 #include <ctime>
+#include <map>
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////// CMatrix_CSC ////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+CMatrix_CSC::CMatrix_CSC(int *_val, int *_row, int *_col, 
+			 int _nnz,  int _m,  int _n): m(_m), n(_n), nnz(_nnz) {
+  this->val = new int[_nnz];
+  this->row = new int[_nnz];
+  this->col_ptr = new int[_n + 1];
+  std::copy(_val, _val + _nnz, val);
+  std::copy(_row, _row + _nnz, row);
+  std::fill(col_ptr, col_ptr + _n + 1, _nnz);
+
+  for (int i = 0; i < _nnz; i++)
+    if (col_ptr[_col[i]] == _nnz)
+      col_ptr[_col[i]] = i;
+
+  for (int i = _n - 1; i >= 0; i--) 
+    if (col_ptr[i] == _nnz)
+      col_ptr[i] = col_ptr[i + 1];
+}
+
+
+// v_s - v_e keeps the row numbers of non-zero entries
+void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh) {
+  std::map<int, int> res;
+  while (v_s != v_e) {
+    for (int i = csc.col_ptr[*v_s]; i < csc.col_ptr[(*v_s) + 1]; ++i) 
+      res[csc.row[i]]++;
+    ++v_s;
+  }
+  for (auto it = res.begin(); it != res.end(); ++it)
+    if (it->second > thresh)
+      result.push_back(VectorElement(it->first, it->second));
+}
+
+
+
 
 
 
