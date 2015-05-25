@@ -48,6 +48,7 @@ typedef std::vector<VectorElement>::iterator SparseVector_iter;
 class CMatrix_CSC {
 public:
   // arr should be sorted, from  top-to-bottom, left-to-right
+ CMatrix_CSC(): m(0), n(0), nnz(0), val(NULL), row(NULL), col_ptr(NULL) {};
  CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
     val = new int[A.nnz];
     std::copy(A.val, A.val + A.nnz, val);
@@ -59,9 +60,12 @@ public:
   CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
   CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
   ~CMatrix_CSC() {
-    delete[] val;
-    delete[] row;
-    delete[] col_ptr;
+    if (val)
+      delete[] val;
+    if (row)
+      delete[] row;
+    if (col_ptr)
+      delete[] col_ptr;
   };
   int m, n;
   int nnz;
