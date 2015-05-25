@@ -68,7 +68,7 @@ void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, dou
 
 
 
-CMatrix_CSC operator *(CMatrix_CSC &A, CMatrix_CSC &B) {
+CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B) {
   CVector val, row, col;
   for (int i = 0; i < B.n; ++i) {
     std::map<int, int> res;
@@ -113,7 +113,7 @@ void CMatrix_COO::sortByColumnRow() {
 
 
 
-std::ostream& operator << (std::ostream & os, CMatrix_COO &coo) {
+std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
   int A[coo.get_m()][coo.get_n()];
   std::fill(A[0], A[0] + coo.get_m() * coo.get_n(), 0);
   for (auto it = coo.data.begin(); it != coo.data.end(); ++it)

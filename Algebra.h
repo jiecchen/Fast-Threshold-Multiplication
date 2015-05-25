@@ -48,7 +48,14 @@ typedef std::vector<VectorElement>::iterator SparseVector_iter;
 class CMatrix_CSC {
 public:
   // arr should be sorted, from  top-to-bottom, left-to-right
- CMatrix_CSC(): val(NULL), row(NULL), col_ptr(NULL) {};
+ CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
+    val = new int[A.nnz];
+    std::copy(A.val, A.val + A.nnz, val);
+    row = new int[A.nnz];
+    std::copy(A.row, A.row + A.nnz, row);
+    col_ptr = new int[A.n + 1];
+    std::copy(A.col_ptr, A.col_ptr + A.n + 1, col_ptr);
+  };
   CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
   CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
   ~CMatrix_CSC() {
@@ -64,7 +71,7 @@ public:
 };
 
 
-CMatrix_CSC operator *(CMatrix_CSC &A, CMatrix_CSC &B);
+CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B);
 
 void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
 
@@ -100,7 +107,7 @@ public:
       n = e.col;
   }
   Element& operator[] (int i) { return data[i]; }
-  friend std::ostream& operator << (std::ostream & os, CMatrix_COO &coo);
+  friend std::ostream& operator << (std::ostream & os, CMatrix_COO coo);
   void print() {
     for (const Element &e: data) 
       std::cout << e.row << " " << e.col << " " << e.val << std::endl;
