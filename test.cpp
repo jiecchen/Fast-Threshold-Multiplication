@@ -7,6 +7,9 @@
 
 
 
+
+
+
 void test_csc() {
   // read matrix P
   int Pm, Pn, nnz;
@@ -23,25 +26,31 @@ void test_csc() {
   CMatrix_COO coo(arr.begin(), arr.end(), Pm, Pn);
   CMatrix_CSC csc(val, row, col, nnz, Pm, Pn);
   
-  int v[] = {0, 2, 3, 4, 5};
+  // int v[] = {0, 1, 2, 3, 4, 5};
   
-  SparseVector result;
-  thresh_mult(result, csc, v, v + 5, 0);
+  // SparseVector result;
+  // thresh_mult(result, csc, v, v + 6, 0);
   std::cout << "mat = \n" << coo << std::endl;
-  std::cout << result << std::endl;
+  //  std::cout << result << std::endl;
     
 
 
-  // // read matrix Q
-  // std::cin >> Qm >> Qn;
-  // std::cin >> nnz;
-  // arr.clear();
-  // for (int i = 0; i < nnz; ++i) {
-  //   std::cin >> row >> col >> val;
-  //   arr.push_back(Element(row, col, val));
-  // }   
-  // CMatrix_COO Q(arr.begin(), arr.end(), Qm, Qn);
-  
+  // read matrix Q
+  int Qm, Qn;
+  std::cin >> Qm >> Qn;
+  std::cin >> nnz;
+  arr.clear();
+  for (int i = 0; i < nnz; ++i) {
+    std::cin >> row[i] >> col[i] >> val[i];
+    arr.push_back(Element(row[i], col[i], val[i]));
+  }   
+  CMatrix_COO Q(arr.begin(), arr.end(), Qm, Qn);
+  CMatrix_CSC new_csc(val, row, col, nnz, Qm, Qn);
+  std::cout << "new mat = \n" << Q << std::endl;
+  CMatrix_CSC qq = csc * new_csc;
+  Q = toCoo(qq);
+  std::cout << "mul = \n" << Q << std::endl;
+
 }
 
 

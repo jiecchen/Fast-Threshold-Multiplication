@@ -33,8 +33,8 @@ int main() {
   fill(Q[0], Q[0] + Pn * Qn, 0);
   for (int i = 0; i < nnz; ++i)
     Q[rand() % Pn][rand() % Qn] = 1;
-  for (int i = 0; i < Pn; ++i)
-    for (int j = 0; j < Qn; ++j)
+  for (int j = 0; j < Qn; ++j)
+    for (int i = 0; i < Pn; ++i)
       if (Q[i][j] > 0)
 	nonz.push_back(Element(i, j, 1));
   cout << Pn << " " << Qn << endl;

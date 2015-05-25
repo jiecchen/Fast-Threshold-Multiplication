@@ -1,5 +1,6 @@
 #ifndef __ALGEBRA_H__
 #define __ALGEBRA_H__
+#include <iterator>
 #include <vector>
 #include <iostream>
 
@@ -47,6 +48,8 @@ typedef std::vector<VectorElement>::iterator SparseVector_iter;
 class CMatrix_CSC {
 public:
   // arr should be sorted, from  top-to-bottom, left-to-right
+ CMatrix_CSC(): val(NULL), row(NULL), col_ptr(NULL) {};
+  CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
   CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
   ~CMatrix_CSC() {
     delete[] val;
@@ -61,7 +64,12 @@ public:
 };
 
 
+CMatrix_CSC operator *(CMatrix_CSC &A, CMatrix_CSC &B);
+
 void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////// CMatrix_COO ////////////////////////////////////////
@@ -134,6 +142,7 @@ std::ostream& operator << (std::ostream &os,  const SparseVector &vec);
 void sumRows_Coo(int *result, CMatrix_COO &P);
 // inner product v * sv
 int inner_prod(int *v, SparseVector &sv);
+CMatrix_COO toCoo(CMatrix_CSC &mat);
 
 #endif
 
