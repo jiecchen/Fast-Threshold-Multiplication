@@ -3,6 +3,8 @@
 #include <numeric>
 //#include <iomanip>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 
 //Principle:
 //   + each function only do one thing
@@ -126,8 +128,25 @@ double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC&
   return r;
 }
 
+// create count min with dim w * mu * n
+CMatrix_CSC createCountMin(int w, int mu, int n) {
+  std::srand(time(NULL));
+  int val[mu * n];
+  std::fill(val, val + mu * n, 1);
+  int row[mu * n];
+  int col[mu * n];
+  int t = 0;
+  for (int i = 0; i < n; ++i) 
+    for (int j = 0; j < mu; ++j) {
+      row[t] = std::rand() % w + j * w;
+      col[t++] = i;
+    }
+      
+  return CMatrix_CSC(val, row, col, mu * n, w * mu, n);
+}
 
-// recover entries > theta in P * Q * vec
+
+// recover entries > theta in P * Q * W
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC &W, 
 			    double theta, double rho) {
   //  const int mu = 5;

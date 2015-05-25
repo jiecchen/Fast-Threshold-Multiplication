@@ -91,8 +91,8 @@ CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho
 
 
 
-double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W);
-
+// double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W);
+CMatrix_CSC createCountMin(int w, int mu, int n);
 
 
 
