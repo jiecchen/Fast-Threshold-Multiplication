@@ -65,6 +65,8 @@ int recover(int *cm, const MatrixSketch &sk, int coor);
 // oldCoo has to be sorted by ColumnRow
 // newCoo is empty
 void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo);
+CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc);
+
 
 // create a dyadic structure for B
 // keep in dyadic

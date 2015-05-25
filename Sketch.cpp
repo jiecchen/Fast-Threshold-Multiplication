@@ -77,6 +77,40 @@ void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo) {
       newCoo.push_back(Element(oldCoo[i].row / 2, oldCoo[i].col, oldCoo[i].val));
 }
 
+
+
+CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
+  if (oldCsc.nnz <= 0)
+    return CMatrix_CSC();
+  CVector val, row, col;
+  for (int i = 0; i < oldCsc.n; ++i) { // col number
+
+    for (int j = oldCsc.col_ptr[i]; j < oldCsc.col_ptr[i + 1]; ++j) {
+      if (j == oldCsc.col_ptr[i]) {
+	val.push_back(oldCsc.val[j]);
+	row.push_back(oldCsc.row[j] >> 1);
+	col.push_back(i);
+	continue;
+      }
+      
+      if ((oldCsc.row[j] >> 1) == row.back()) 
+	val.back() += oldCsc.val[j];
+      else {
+	val.push_back(oldCsc.val[j]);
+	row.push_back(oldCsc.row[j] >> 1);
+	col.push_back(i);
+      }
+    }// for j    
+  }// for i
+  
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), 
+		     (oldCsc.m + 1) >> 1, oldCsc.n); 
+}
+
+
+
+
+
 // create O(log m) matrix sketches, form as
 // dyadic sketch
 void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B) {
