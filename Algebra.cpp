@@ -85,7 +85,7 @@ CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B) {
   return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), A.m, B.n);
 }
 
-CMatrix_COO toCoo(CMatrix_CSC &mat) {
+CMatrix_COO toCoo(const CMatrix_CSC &mat) {
   CMatrix_COO coo;
   for (int i = 0; i < mat.n; i++)
     for (int j = mat.col_ptr[i]; j < mat.col_ptr[i + 1]; ++j)

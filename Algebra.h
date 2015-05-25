@@ -49,6 +49,32 @@ class CMatrix_CSC {
 public:
   // arr should be sorted, from  top-to-bottom, left-to-right
  CMatrix_CSC(): m(0), n(0), nnz(0), val(NULL), row(NULL), col_ptr(NULL) {};
+  
+  // move constructor
+ CMatrix_CSC(CMatrix_CSC&& A): m(A.m), n(A.n), nnz(A.nnz) {
+    val = A.val;
+    A.val = NULL;
+    row = A.row;
+    A.row = NULL;
+    col_ptr = A.col_ptr;
+    A.col_ptr = NULL;
+  };
+  /* CMatrix_CSC& operator =(CMatrix_CSC&& A) { */
+  /*   m = A.m; */
+  /*   n = A.n; */
+  /*   nnz = A.nnz; */
+  /*   delete val; */
+  /*   val = A.val; */
+  /*   A.val = NULL; */
+  /*   delete row; */
+  /*   row = A.row; */
+  /*   A.row = NULL; */
+  /*   delete col_ptr; */
+  /*   col_ptr = A.col_ptr; */
+  /*   A.col_ptr = NULL; */
+  /*   return *this; */
+  /* } */
+  // copy constructor
  CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
     val = new int[A.nnz];
     std::copy(A.val, A.val + A.nnz, val);
@@ -60,12 +86,9 @@ public:
   CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
   CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
   ~CMatrix_CSC() {
-    if (val)
-      delete[] val;
-    if (row)
-      delete[] row;
-    if (col_ptr)
-      delete[] col_ptr;
+    delete[] val;
+    delete[] row;
+    delete[] col_ptr;
   };
   int m, n;
   int nnz;
@@ -153,7 +176,7 @@ std::ostream& operator << (std::ostream &os,  const SparseVector &vec);
 void sumRows_Coo(int *result, CMatrix_COO &P);
 // inner product v * sv
 int inner_prod(int *v, SparseVector &sv);
-CMatrix_COO toCoo(CMatrix_CSC &mat);
+CMatrix_COO toCoo(const CMatrix_CSC &mat);
 
 #endif
 
