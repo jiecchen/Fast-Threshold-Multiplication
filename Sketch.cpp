@@ -1,5 +1,7 @@
 #include "Algebra.h"
 #include "Sketch.h"
+#include <numeric>
+//#include <iomanip>
 #include <cmath>
 
 //Principle:
@@ -108,6 +110,62 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
 }
 
 
+
+double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W) {
+  int val[P.m];
+  std::fill(val, val + P.m, 1);
+  int row[P.m];
+  std::fill(row, row + P.m, 0);
+  int col[P.m];
+  std::iota(col, col + P.m, 0);
+  CMatrix_CSC S(val, row, col, P.m, 1, P.m);
+  CMatrix_CSC&& res = ((S * P) * Q) * W;
+  double r = 0;
+  for (int i = 0; i < W.n; ++i)
+    r += res.val[i];
+  return r;
+}
+
+
+// recover entries > theta in P * Q * vec
+CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC &W, 
+			    double theta, double rho) {
+  //  const int mu = 5;
+  CMatrix_CSC* Ps[MAX_LOGN];
+  //  CMatrix_CSC* CMs[MAX_LOGN];
+  //  Ps[0] = &P;
+  int t = 0;
+
+  while (Ps[t]->m > 1) {
+    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
+    ++t;
+  }
+
+  // calc ||P * Q  * W||_1
+  //  double R1 = calcL1Norm(P, Q, W);
+  // int w = std::ceil(std::sqrt(R1 / theta / rho));
+
+  // int val[mu * P.m + 10];
+  // int row[mu * P.m + 10];
+  // int col[mu * P.m + 10];
+  
+  
+  for (int i = 0; i < t; ++i) {
+    // create count min sketch
+    
+
+
+  }
+    
+  while (--t > 0) {
+    delete Ps[t];
+  }
+  return P;
+}
+
+// // recover entries > theta in P * Q * W
+// CMatrix_CSC FastThreshMult(CMatrix_CSC &P, CMatrix_CSC &Q, CMatrix_CSC &W, double theta) {
+// }
 
 
 

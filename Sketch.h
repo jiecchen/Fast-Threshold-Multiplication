@@ -68,6 +68,8 @@ void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo);
 CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc);
 
 
+CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC& W,
+			    double theta, double rho);
 // create a dyadic structure for B
 // keep in dyadic
 void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B);
@@ -84,6 +86,15 @@ void thresholdRecover(SparseVector &result, CDyadicSketch &dyadic,
 // theta is a threshold > 0
 // rho \in (0, 1) to control the accuracy
 CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho);
+
+
+
+
+
+double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W);
+
+
+
 
 
 #endif
