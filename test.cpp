@@ -49,10 +49,24 @@ int main() {
   }   
   CMatrix_CSC Q(val, row, col, nnz, Qm, Qn);
 
+  int Wm, Wn;
+  std::cin >> Wm >> Wn;
+  std::cin >> nnz;
+  for (int i = 0; i < nnz; ++i) {
+    std::cin >> row[i] >> col[i] >> val[i];
+  }   
+  CMatrix_CSC W(val, row, col, nnz, Wm, Wn);
 
-  test_csc(P, Q);
-  test_mergeNeighbor(P);
+  //  test_csc(P, Q);
+  //  test_mergeNeighbor(P);
+
+  
+  std::cout << "P * Q * W =\n" << toCoo(P * Q * W) << std::endl;
+  //  std::cout << "r = " << calcL1Norm(P, Q, Q) << std::endl;
+  CMatrix_CSC A = FastThreshMult(P, Q, W, 59, 0.1);
+  std::cout << toCoo(A) << std::endl;
   return 0;
+
 }
 
 
