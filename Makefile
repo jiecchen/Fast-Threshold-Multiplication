@@ -22,7 +22,7 @@ createData: createData.o Algebra.o
 createData.o: createData.cpp Algebra.h
 	$(CC) $(CFLAGS) -c createData.cpp *.h
 
-test.o: test.cpp Algebra.h Sketch.h
+test.o: test.cpp Algebra.h Sketch.h utils.h
 	$(CC) $(CFLAGS) -c test.cpp *.h
 
 Algebra.o: Algebra.h Algebra.cpp
