@@ -62,6 +62,16 @@ int recover(int *cm, const MatrixSketch &sk, int coor) {
   return m;
 }
 
+// recover the entry rw
+int recover(int sk[], const CMatrix_CSC &cm, int rw) {
+  int m = INFINITY;
+  for (int i = 0; i < mu; ++i) {
+    int r = cm.row[rw * mu + i];
+    m = std::min(sk[r], m);
+  }
+  //  std::cerr << "m = " << m << std::endl;
+  return m;
+}
 
 // let oldCoo = [R_0; R_1; R_2; R_3; ...]
 // newCoo = [R_0 + R_1; R_2 + R_3; ...]
@@ -122,9 +132,14 @@ double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC&
   std::iota(col, col + P.m, 0);
   CMatrix_CSC S(val, row, col, P.m, 1, P.m);
   CMatrix_CSC&& res = ((S * P) * Q) * W;
-  double r = 0;
+  int r = 10;
   for (int i = 0; i < W.n; ++i)
-    r += res.val[i];
+    if (i >= res.nnz) {
+      break;
+    }
+    else
+      r = std::max(r, res.val[i]);
+  std::cout << "r = " << r << std::endl;
   return r;
 }
 
@@ -149,37 +164,73 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 // recover entries > theta in P * Q * W
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC &W, 
 			    double theta, double rho) {
-  //  const int mu = 5;
-  CMatrix_CSC* Ps[MAX_LOGN];
-  //  CMatrix_CSC* CMs[MAX_LOGN];
-  //  Ps[0] = &P;
-  int t = 0;
 
+  CMatrix_CSC* Ps[MAX_LOGN];
+  
+  int t = 0;
+  Ps[0] = new CMatrix_CSC(P);
+  //  std::cerr << "Ps[0] = \n" << toCoo(*Ps[0]) << std::endl;
   while (Ps[t]->m > 1) {
     Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
     ++t;
   }
+  ++t;
 
   // calc ||P * Q  * W||_1
-  //  double R1 = calcL1Norm(P, Q, W);
-  // int w = std::ceil(std::sqrt(R1 / theta / rho));
+  double R1 = calcL1Norm(P, Q, W);
+  int w = std::ceil(R1 / theta / rho);
+  std::cerr << "w = " << w << " mu = " << mu << std::endl;
 
-  // int val[mu * P.m + 10];
-  // int row[mu * P.m + 10];
-  // int col[mu * P.m + 10];
-  
-  
+  // create sketches
+  CMatrix_CSC* CMs[MAX_LOGN];
+  CMatrix_CSC sk[MAX_LOGN];
   for (int i = 0; i < t; ++i) {
     // create count min sketch
-    
-
+    CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
+    sk[i] = ((*CMs[i] * *Ps[i]) * Q) * W;
 
   }
-    
-  while (--t > 0) {
+  
+
+  
+  // recover heavy entries
+  CVector val, row, col;
+  int skCol[w * mu]; // keep extracted column vector
+  for (int i = 0; i < W.n; ++i) { // for column
+    CVector ind[MAX_LOGN];
+    ind[t - 1].push_back(0);
+    for (int j = t - 1; j >= 0; --j) {
+      // convert csc col to int[]
+      std::fill(skCol, skCol + w * mu, 0);
+      for (int k = sk[j].col_ptr[i]; k < sk[j].col_ptr[i + 1]; ++k)
+	skCol[sk[j].row[k]] += sk[j].val[k];
+      // now do recover
+      for (auto it = ind[j].begin(); it != ind[j].end(); ++it) {
+	if (*it >= Ps[j]->m)
+	  break;
+	int v = recover(skCol, *CMs[j], *it);
+	if (v > theta) {
+	  if (j > 0) { // has not reached level 0  
+	    ind[j - 1].push_back((*it) * 2);
+	    ind[j - 1].push_back((*it) * 2 + 1);
+	  }
+	  else { // reach level 0, keep the result
+	    val.push_back(v);
+	    row.push_back(*it);
+	    col.push_back(i);
+	  } 
+	} // if
+      } // for (auto
+    } // for (int j ..      
+  }// for (int i
+
+
+  // release memory
+  while (--t >= 0) {
     delete Ps[t];
   }
-  return P;
+
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, W.n);
 }
 
 // // recover entries > theta in P * Q * W
