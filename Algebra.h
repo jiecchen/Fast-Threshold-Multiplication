@@ -59,21 +59,21 @@ public:
     col_ptr = A.col_ptr;
     A.col_ptr = NULL;
   };
-  /* CMatrix_CSC& operator =(CMatrix_CSC&& A) { */
-  /*   m = A.m; */
-  /*   n = A.n; */
-  /*   nnz = A.nnz; */
-  /*   delete val; */
-  /*   val = A.val; */
-  /*   A.val = NULL; */
-  /*   delete row; */
-  /*   row = A.row; */
-  /*   A.row = NULL; */
-  /*   delete col_ptr; */
-  /*   col_ptr = A.col_ptr; */
-  /*   A.col_ptr = NULL; */
-  /*   return *this; */
-  /* } */
+  CMatrix_CSC& operator =(CMatrix_CSC&& A) {
+    m = A.m;
+    n = A.n;
+    nnz = A.nnz;
+    delete val;
+    val = A.val;
+    A.val = NULL;
+    delete row;
+    row = A.row;
+    A.row = NULL;
+    delete col_ptr;
+    col_ptr = A.col_ptr;
+    A.col_ptr = NULL;
+    return *this;
+  }
   // copy constructor
  CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
     val = new int[A.nnz];
