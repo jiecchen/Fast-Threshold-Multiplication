@@ -67,7 +67,8 @@ void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, dou
 
 
 
-
+//TODO:
+//  + bug: when A * B is zero matrix
 CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B) {
   CVector val, row, col;
   for (int i = 0; i < B.n; ++i) {
