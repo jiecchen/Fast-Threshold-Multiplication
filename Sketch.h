@@ -3,7 +3,7 @@
 #include "Algebra.h"
 #include <vector>
 const int MAX_LOGN = 15;
-const int mu = 20;
+const int mu = 10;
 /////////////////////////////////////////////////////////////////////////
 /////////////////////// Sketch Related //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc);
 
 
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC& W,
-			    double theta, double rho);
+			   int w, double theta, double rho);
 // create a dyadic structure for B
 // keep in dyadic
 void dyadicSketch(CDyadicSketch &dyadic,  double eps, int u, CMatrix_COO &B);

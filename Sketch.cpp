@@ -123,7 +123,7 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
 
 
 
-double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W) {
+CVector calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W) {
   int val[P.m];
   std::fill(val, val + P.m, 1);
   int row[P.m];
@@ -131,16 +131,16 @@ double calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC&
   int col[P.m];
   std::iota(col, col + P.m, 0);
   CMatrix_CSC S(val, row, col, P.m, 1, P.m);
-  CMatrix_CSC&& res = ((S * P) * Q) * W;
-  int r = 10;
-  for (int i = 0; i < W.n; ++i)
-    if (i >= res.nnz) {
-      break;
-    }
-    else
-      r = std::max(r, res.val[i]);
-  std::cout << "r = " << r << std::endl;
-  return r;
+  CMatrix_COO&& res = toCoo(((S * P) * Q) * W);
+
+  
+  int l1[W.n];
+  std::fill(l1, l1 + W.n, 0);
+
+  for (int i = 0; i < res.size(); ++i)
+    l1[res[i].col] += res[i].val;
+
+  return CVector(l1, l1 + W.n);
 }
 
 // create count min with dim w * mu * n
@@ -163,7 +163,7 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 
 // recover entries > theta in P * Q * W
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC &W, 
-			    double theta, double rho) {
+			   int w, double theta, double rho) {
 
   CMatrix_CSC* Ps[MAX_LOGN];
   
@@ -177,8 +177,8 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMa
   ++t;
 
   // calc ||P * Q  * W||_1
-  double R1 = calcL1Norm(P, Q, W);
-  int w = std::ceil(R1 / theta / rho);
+  //  double R1 = calcL1Norm(P, Q, W);
+  // int w = std::ceil(0.1 * R1 / theta / rho);
   std::cerr << "w = " << w << " mu = " << mu << std::endl;
 
   // create sketches
@@ -192,11 +192,26 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMa
   }
   
 
-  
+  CVector&& R1 = calcL1Norm(P, Q, W);
   // recover heavy entries
   CVector val, row, col;
   int skCol[w * mu]; // keep extracted column vector
   for (int i = 0; i < W.n; ++i) { // for column
+
+    if (2 * R1[i] >  (2 + rho * (w - 2)) * theta) { // use exact algorithm
+      CMatrix_CSC&& res = P * (Q * W[i]);
+      for (int j = 0; j < res.nnz; ++j)
+	if (res.val[j] > theta) {
+	  val.push_back(res.val[j]);
+	  row.push_back(res.row[j]);
+	  col.push_back(i);
+	}
+      //      std::cerr << "Column " << i << " uses exact algorithm" << std::endl;
+      continue;
+    }
+    
+    //    std::cerr << "Column " << i << " uses count min" << std::endl;
+    // use count min
     CVector ind[MAX_LOGN];
     ind[t - 1].push_back(0);
     for (int j = t - 1; j >= 0; --j) {
@@ -218,6 +233,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMa
 	    val.push_back(v);
 	    row.push_back(*it);
 	    col.push_back(i);
+
 	  } 
 	} // if
       } // for (auto
