@@ -52,18 +52,18 @@ CMatrix_CSC::CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col
 
 
 
-// v_s - v_e keeps the row numbers of non-zero entries
-void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh) {
-  std::map<int, int> res;
-  while (v_s != v_e) {
-    for (int i = csc.col_ptr[*v_s]; i < csc.col_ptr[(*v_s) + 1]; ++i) 
-      res[csc.row[i]]++;
-    ++v_s;
-  }
-  for (auto it = res.begin(); it != res.end(); ++it)
-    if (it->second > thresh)
-      result.push_back(VectorElement(it->first, it->second));
-}
+// // v_s - v_e keeps the row numbers of non-zero entries
+// void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh) {
+//   std::map<int, int> res;
+//   while (v_s != v_e) {
+//     for (int i = csc.col_ptr[*v_s]; i < csc.col_ptr[(*v_s) + 1]; ++i) 
+//       res[csc.row[i]]++;
+//     ++v_s;
+//   }
+//   for (auto it = res.begin(); it != res.end(); ++it)
+//     if (it->second > thresh)
+//       result.push_back(VectorElement(it->first, it->second));
+// }
 
 
 
@@ -138,82 +138,82 @@ std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
 
 
 
-// product of two coo matrix, return a int*
-int* coo_mult(CMatrix_COO &A, CMatrix_COO &B) {
-  int *data = new int[A.get_m() * B.get_n()]();
-  int v[A.get_n()];
-  A.sortByRowColumn();
-  //  B.sortByColumnRow();
-  int t = 0;
-  int row = A[t].row;
-  while (t < A.size()) {
-    // construct the row of A
-    std::fill(v, v + A.get_n(), 0);
-    v[A[t].col] = A[t].val;
-    ++t;
-    while (t < A.size() && A[t-1].row == A[t].row) {
-      v[A[t].col] = A[t].val;
-      ++t;
-    }
-    CVector cv = CVector(v, v + A.get_n());
-    //    std::cout << "row = " << row << " v = " << cv  << std::endl;
+// // product of two coo matrix, return a int*
+// int* coo_mult(CMatrix_COO &A, CMatrix_COO &B) {
+//   int *data = new int[A.get_m() * B.get_n()]();
+//   int v[A.get_n()];
+//   A.sortByRowColumn();
+//   //  B.sortByColumnRow();
+//   int t = 0;
+//   int row = A[t].row;
+//   while (t < A.size()) {
+//     // construct the row of A
+//     std::fill(v, v + A.get_n(), 0);
+//     v[A[t].col] = A[t].val;
+//     ++t;
+//     while (t < A.size() && A[t-1].row == A[t].row) {
+//       v[A[t].col] = A[t].val;
+//       ++t;
+//     }
+//     CVector cv = CVector(v, v + A.get_n());
+//     //    std::cout << "row = " << row << " v = " << cv  << std::endl;
 
-    // calculate v' * B
-    for (int i = 0; i < B.size(); i++)
-      data[row * B.get_n() + B[i].col] += B[i].val * v[B[i].row];
+//     // calculate v' * B
+//     for (int i = 0; i < B.size(); i++)
+//       data[row * B.get_n() + B[i].col] += B[i].val * v[B[i].row];
     
 
-    if (t < A.size())
-      row = A[t].row;
+//     if (t < A.size())
+//       row = A[t].row;
         
-  }
-  return data;
-}
+//   }
+//   return data;
+// }
 
 
 
-// r = P * vec
-// result = r[r > thresh]
-// note:  P has to be sorted by RowColumn
-void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh) {
-  int v[P.get_n()];
-  std::fill(v, v + P.get_n(), 0);
-  for (const VectorElement &it : vec)
-    v[it.ind] = it.val;
-  int t = 0; 
-  while (t < P.size()) {
-    int current_row = P[t].row;
-    int prod = 0;
-    prod += P[t].val * v[P[t].col];
-    ++t;
+// // r = P * vec
+// // result = r[r > thresh]
+// // note:  P has to be sorted by RowColumn
+// void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh) {
+//   int v[P.get_n()];
+//   std::fill(v, v + P.get_n(), 0);
+//   for (const VectorElement &it : vec)
+//     v[it.ind] = it.val;
+//   int t = 0; 
+//   while (t < P.size()) {
+//     int current_row = P[t].row;
+//     int prod = 0;
+//     prod += P[t].val * v[P[t].col];
+//     ++t;
 
-    while (t < P.size() && P[t].row == P[t-1].row) {
-      prod += P[t].val * v[P[t].col];
-      ++t;
-    }
+//     while (t < P.size() && P[t].row == P[t-1].row) {
+//       prod += P[t].val * v[P[t].col];
+//       ++t;
+//     }
 
-    if (prod > thresh) 
-      result.push_back(VectorElement(current_row, prod));    
-  }
-}
-
-
+//     if (prod > thresh) 
+//       result.push_back(VectorElement(current_row, prod));    
+//   }
+// }
 
 
 
-// sum rows of an coo matrix
-void sumRows_Coo(int *result, CMatrix_COO &P) {
-  std::fill(result, result + P.get_n(), 0);
-  for (int i = 0; i < P.size(); ++i)
-    result[P[i].col] += P[i].val;
-}
 
-int inner_prod(int *v, SparseVector &sv) {
-  int res = 0;
-  for (auto it = sv.begin(); it != sv.end(); ++it)
-    res += v[it->ind] * it->val;
-  return res;
-}
+
+// // sum rows of an coo matrix
+// void sumRows_Coo(int *result, CMatrix_COO &P) {
+//   std::fill(result, result + P.get_n(), 0);
+//   for (int i = 0; i < P.size(); ++i)
+//     result[P[i].col] += P[i].val;
+// }
+
+// int inner_prod(int *v, SparseVector &sv) {
+//   int res = 0;
+//   for (auto it = sv.begin(); it != sv.end(); ++it)
+//     res += v[it->ind] * it->val;
+//   return res;
+// }
 
 
 

@@ -4,8 +4,6 @@
 #include <vector>
 #include <iostream>
 
-//TODO:
-//  + combine CSC & CSR to create CMatrix type?
 
 int const INFINITY = 100000000;
 
@@ -59,6 +57,8 @@ public:
     col_ptr = A.col_ptr;
     A.col_ptr = NULL;
   };
+
+  // move assignment
   CMatrix_CSC& operator =(CMatrix_CSC&& A) {
     m = A.m;
     n = A.n;
@@ -74,6 +74,7 @@ public:
     A.col_ptr = NULL;
     return *this;
   }
+
   // copy constructor
  CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
     val = new int[A.nnz];
@@ -83,9 +84,11 @@ public:
     col_ptr = new int[A.n + 1];
     std::copy(A.col_ptr, A.col_ptr + A.n + 1, col_ptr);
   };
+
   CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
   CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
 
+  // slicing
   CMatrix_CSC operator[](int i) const {// return i_th column
     CVector _val, _row, _col;
     for (int t = col_ptr[i]; t < col_ptr[i + 1]; ++t) {
@@ -111,7 +114,7 @@ public:
 
 CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B);
 
-void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
+//void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
 
 
 
@@ -169,25 +172,31 @@ private:
   std::vector<Element> data;
 };
 
-// multiplication for coo format
-// return an int* as a result
-// complexity O(nnz(B) * A.m)
-int* coo_mult(CMatrix_COO &A, CMatrix_COO &B);
 
-
-// r = P * vec
-// result = r[r > thresh]
-// note:  P has to be sorted by RowColumn
-// complexity O(nnz(P))
-void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh);
-
-std::ostream& operator << (std::ostream &os,  const SparseVector &vec); 
-
-// sum rows of an coo matrix
-void sumRows_Coo(int *result, CMatrix_COO &P);
-// inner product v * sv
-int inner_prod(int *v, SparseVector &sv);
+// convert CSC to COO format
 CMatrix_COO toCoo(const CMatrix_CSC &mat);
+
+
+
+/* // multiplication for coo format */
+/* // return an int* as a result */
+/* // complexity O(nnz(B) * A.m) */
+/* int* coo_mult(CMatrix_COO &A, CMatrix_COO &B); */
+
+
+/* // r = P * vec */
+/* // result = r[r > thresh] */
+/* // note:  P has to be sorted by RowColumn */
+/* // complexity O(nnz(P)) */
+/* void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh); */
+
+/* std::ostream& operator << (std::ostream &os,  const SparseVector &vec);  */
+
+/* // sum rows of an coo matrix */
+/* void sumRows_Coo(int *result, CMatrix_COO &P); */
+/* // inner product v * sv */
+/* int inner_prod(int *v, SparseVector &sv); */
+
 
 #endif
 
