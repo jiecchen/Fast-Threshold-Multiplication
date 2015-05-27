@@ -115,16 +115,18 @@ void CMatrix_COO::sortByColumnRow() {
 
 
 std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
-  int A[coo.get_m()][coo.get_n()];
-  std::fill(A[0], A[0] + coo.get_m() * coo.get_n(), 0);
+  // int A[coo.get_m()][coo.get_n()];
+  // std::fill(A[0], A[0] + coo.get_m() * coo.get_n(), 0);
+  // for (auto it = coo.data.begin(); it != coo.data.end(); ++it)
+  //   A[it->row][it->col] = it->val;
+  // for (int i = 0; i < coo.get_m(); ++i) {
+  //   for (int j = 0; j < coo.get_n(); ++j)
+  //     os << std::setw(6) << A[i][j];
+  //   os << std::endl;
+  // }
+
   for (auto it = coo.data.begin(); it != coo.data.end(); ++it)
-    A[it->row][it->col] = it->val;
-  for (int i = 0; i < coo.get_m(); ++i) {
-    for (int j = 0; j < coo.get_n(); ++j)
-      os << std::setw(6) << A[i][j];
-    os << std::endl;
-  }
-  //  os << it->row << ", " << it->col << ", " << it->val << std::endl;
+    os << it->row << ", " << it->col << ", " << it->val << std::endl;
   return os;
 }
 
