@@ -85,6 +85,17 @@ public:
   };
   CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
   CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
+
+  CMatrix_CSC operator[](int i) const {// return i_th column
+    CVector _val, _row, _col;
+    for (int t = col_ptr[i]; t < col_ptr[i + 1]; ++t) {
+      _val.push_back(val[t]);
+      _row.push_back(row[t]);
+      _col.push_back(0);
+    }
+    return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, 1);
+  };
+
   ~CMatrix_CSC() {
     delete[] val;
     delete[] row;
