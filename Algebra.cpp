@@ -11,8 +11,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////// CMatrix_CSC ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-CMatrix_CSC::CMatrix_CSC(int *_val, int *_row, int *_col, 
-			 int _nnz,  int _m,  int _n): m(_m), n(_n), nnz(_nnz) {
+void CMatrix_CSC::init(int *_val, int *_row, int *_col, 
+			 int _nnz,  int _m,  int _n) {
+  this->m = _m;
+  this->n = _n;
+  this->nnz = _nnz;
   this->val = new int[_nnz];
   this->row = new int[_nnz];
   this->col_ptr = new int[_n + 1];

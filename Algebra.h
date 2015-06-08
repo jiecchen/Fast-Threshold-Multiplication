@@ -38,85 +38,6 @@ typedef std::vector<VectorElement>::iterator SparseVector_iter;
 
 
 
-///////////////////////////////////////////////////////////////////////////////
-////////////////////////// CMatrix_CSC ////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-// once created, can not change
-
-class CMatrix_CSC {
-public:
-  // arr should be sorted, from  top-to-bottom, left-to-right
- CMatrix_CSC(): m(0), n(0), nnz(0), val(NULL), row(NULL), col_ptr(NULL) {};
-  
-  // move constructor
- CMatrix_CSC(CMatrix_CSC&& A): m(A.m), n(A.n), nnz(A.nnz) {
-    val = A.val;
-    A.val = NULL;
-    row = A.row;
-    A.row = NULL;
-    col_ptr = A.col_ptr;
-    A.col_ptr = NULL;
-  };
-
-  // move assignment
-  CMatrix_CSC& operator =(CMatrix_CSC&& A) {
-    m = A.m;
-    n = A.n;
-    nnz = A.nnz;
-    delete val;
-    val = A.val;
-    A.val = NULL;
-    delete row;
-    row = A.row;
-    A.row = NULL;
-    delete col_ptr;
-    col_ptr = A.col_ptr;
-    A.col_ptr = NULL;
-    return *this;
-  }
-
-  // copy constructor
- CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
-    val = new int[A.nnz];
-    std::copy(A.val, A.val + A.nnz, val);
-    row = new int[A.nnz];
-    std::copy(A.row, A.row + A.nnz, row);
-    col_ptr = new int[A.n + 1];
-    std::copy(A.col_ptr, A.col_ptr + A.n + 1, col_ptr);
-  };
-
-  CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
-  CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
-
-  // slicing
-  CMatrix_CSC operator[](int i) const {// return i_th column
-    CVector _val, _row, _col;
-    for (int t = col_ptr[i]; t < col_ptr[i + 1]; ++t) {
-      _val.push_back(val[t]);
-      _row.push_back(row[t]);
-      _col.push_back(0);
-    }
-    return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, 1);
-  };
-
-  ~CMatrix_CSC() {
-    delete[] val;
-    delete[] row;
-    delete[] col_ptr;
-  };
-  int m, n;
-  int nnz;
-  int *val;
-  int *row;
-  int *col_ptr;
-};
-
-
-CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B);
-
-//void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -171,6 +92,134 @@ private:
   int m, n;
   std::vector<Element> data;
 };
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+////////////////////////// CMatrix_CSC ////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// once created, can not change
+
+class CMatrix_CSC {
+public:
+  // arr should be sorted, from  top-to-bottom, left-to-right
+ CMatrix_CSC(): m(0), n(0), nnz(0), val(NULL), row(NULL), col_ptr(NULL) {};
+  
+  // move constructor
+ CMatrix_CSC(CMatrix_CSC&& A): m(A.m), n(A.n), nnz(A.nnz) {
+    val = A.val;
+    A.val = NULL;
+    row = A.row;
+    A.row = NULL;
+    col_ptr = A.col_ptr;
+    A.col_ptr = NULL;
+  };
+
+  // copy constructor
+ CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
+    val = new int[A.nnz];
+    std::copy(A.val, A.val + A.nnz, val);
+    row = new int[A.nnz];
+    std::copy(A.row, A.row + A.nnz, row);
+    col_ptr = new int[A.n + 1];
+    std::copy(A.col_ptr, A.col_ptr + A.n + 1, col_ptr);
+  };
+
+  CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
+  CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n) {
+    CMatrix_COO coo(_m, _n);
+    for (int i = 0; i < _nnz; ++i)
+      coo.push_back(Element(_row[i], _col[i], _val[i]));
+    this->init(coo);
+  };
+
+
+  CMatrix_CSC(CMatrix_COO& coo) {
+    this->init(coo);
+  };
+
+  void init(CMatrix_COO& coo) {
+    coo.sortByColumnRow();
+    int *_val = new int[coo.size()];
+    int *_col = new int[coo.size()];
+    int *_row = new int[coo.size()];
+    for (int i = 0; i < coo.size(); i++) {
+      _val[i] = coo[i].val;
+      _row[i] = coo[i].row;
+      _col[i] = coo[i].col;
+    }
+    this->init(_val, _row, _col, coo.size(), coo.get_m(), coo.get_n());
+    delete[] _val;
+    delete[] _row;
+    delete[] _col;
+  };
+
+
+
+  // move assignment
+  CMatrix_CSC& operator =(CMatrix_CSC&& A) {
+    m = A.m;
+    n = A.n;
+    nnz = A.nnz;
+    delete val;
+    val = A.val;
+    A.val = NULL;
+    delete row;
+    row = A.row;
+    A.row = NULL;
+    delete col_ptr;
+    col_ptr = A.col_ptr;
+    A.col_ptr = NULL;
+    return *this;
+  };
+
+
+
+
+
+
+  // slicing
+  CMatrix_CSC operator[](int i) const {// return i_th column
+    CVector _val, _row, _col;
+    for (int t = col_ptr[i]; t < col_ptr[i + 1]; ++t) {
+      _val.push_back(val[t]);
+      _row.push_back(row[t]);
+      _col.push_back(0);
+    }
+    return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, 1);
+  };
+
+  ~CMatrix_CSC() {
+    delete[] val;
+    delete[] row;
+    delete[] col_ptr;
+  };
+
+  int m, n;
+  int nnz;
+  int *val;
+  int *row;
+  int *col_ptr;
+
+private:
+  void init(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
+
+};
+
+
+CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B);
+
+//void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh);
+
+
+
+
+
 
 
 // convert CSC to COO format
