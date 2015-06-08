@@ -131,20 +131,27 @@ public:
   };
 
   CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
-  CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n) {
-    CMatrix_COO coo(_m, _n);
-    for (int i = 0; i < _nnz; ++i)
-      coo.push_back(Element(_row[i], _col[i], _val[i]));
-    this->init(coo);
+  CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n, bool sorted=false) {
+    if (sorted) {
+      this->init(_val, _row, _col, _nnz, _m, _n);
+    }
+    else {
+      CMatrix_COO coo(_m, _n);
+      for (int i = 0; i < _nnz; ++i)
+	coo.push_back(Element(_row[i], _col[i], _val[i]));
+      this->init(coo, sorted);
+    }
   };
 
 
-  CMatrix_CSC(CMatrix_COO& coo) {
-    this->init(coo);
+  CMatrix_CSC(CMatrix_COO& coo, bool sorted=false) {
+    this->init(coo, sorted);
+
   };
 
-  void init(CMatrix_COO& coo) {
-    coo.sortByColumnRow();
+  void init(CMatrix_COO& coo, bool sorted=false) {
+    if (!sorted)
+      coo.sortByColumnRow();
     int *_val = new int[coo.size()];
     int *_col = new int[coo.size()];
     int *_row = new int[coo.size()];
