@@ -9,7 +9,7 @@
 
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
-const int mu = 5;
+const int mu = 3;
 
 //Principle:
 //   + each function only do one thing
@@ -64,7 +64,7 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
 
 
 
-CVector calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC& W) {
+CVector calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q) {
   int val[P.m];
   std::fill(val, val + P.m, 1);
   int row[P.m];
@@ -72,16 +72,16 @@ CVector calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC
   int col[P.m];
   std::iota(col, col + P.m, 0);
   CMatrix_CSC S(val, row, col, P.m, 1, P.m);
-  CMatrix_COO&& res = toCoo(((S * P) * Q) * W);
+  CMatrix_COO&& res = toCoo((S * P) * Q);
 
   
-  int l1[W.n];
-  std::fill(l1, l1 + W.n, 0);
+  int l1[Q.n];
+  std::fill(l1, l1 + Q.n, 0);
 
   for (int i = 0; i < res.size(); ++i)
     l1[res[i].col] += res[i].val;
 
-  return CVector(l1, l1 + W.n);
+  return CVector(l1, l1 + Q.n);
 }
 
 // create count min with dim w * mu * n
@@ -109,6 +109,7 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 // recover entries > theta in P * Q * W
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
 			   int w, double theta, double rho) {
+
 
   CMatrix_CSC* Ps[MAX_LOGN];
   CTimer timer;
@@ -141,13 +142,17 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
   
-  // timer.start();
-  // CVector&& R1 = calcL1Norm(P, Q, W);
-  // timer.stop("calcL1Norm(P, Q, W) ");
+  timer.start();
+  CVector&& R1 = calcL1Norm(P, Q);
+  timer.stop("calcL1Norm(P, Q) ");
+
+
+  int debug_ct_naive = 0;
+  int debug_ct_algor = 0;
+
+
   
   timer.start();
-
-
   ///////////////////////////////////////////
   // recover heavy entries
   ///////////////////////////////////////////
@@ -155,6 +160,21 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   int skCol[w * mu]; // keep extracted column vector
 
   for (int i = 0; i < Q.n; ++i) { // for column
+
+    if (R1[i] > 0.4 * w * theta) { // use exact algorithm
+      debug_ct_naive++;
+      CMatrix_CSC&& res = P * Q[i];
+      for (int j = 0; j < res.col_ptr[1]; ++j) 
+	if (res.val[j] > theta) {
+	  val.push_back(res.val[j]);
+	  row.push_back(res.row[j]);
+	  col.push_back(i);
+	}
+      continue;
+    }
+
+    debug_ct_algor++;
+
     CVector ind[MAX_LOGN]; // dyadic structure
     ind[t - 1].push_back(0);
     for (int j = t - 1; j >= 0; --j) {
@@ -191,7 +211,10 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   while (--t >= 0) {
     delete Ps[t];
   }
-  std::cout << val.size() << std::endl;
+  
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+
   return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
 }
 

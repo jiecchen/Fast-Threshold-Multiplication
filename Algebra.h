@@ -70,6 +70,12 @@ public:
   Element& operator[] (int i) { return data[i]; }
   friend std::ostream& operator << (std::ostream & os, CMatrix_COO coo);
   void print(double theta = 0) const {
+    int ct = 0;
+    for (const Element &e: data)
+      if (e.val > theta)
+	ct++;
+    std::cout << "size = " << ct << std::endl;
+
     for (const Element &e: data)
       if (e.val > theta)
 	std::cout << e.row << " " << e.col << " " << e.val << std::endl;
