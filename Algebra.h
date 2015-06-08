@@ -1,11 +1,10 @@
 #ifndef __ALGEBRA_H__
 #define __ALGEBRA_H__
+#include <algorithm>
 #include <iterator>
 #include <vector>
 #include <iostream>
 
-
-int const INFINITY = 100000000;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,6 +87,8 @@ public:
       std::swap(it->row, it->col);
     return cm;
   };
+
+
 private:
   int m, n;
   std::vector<Element> data;

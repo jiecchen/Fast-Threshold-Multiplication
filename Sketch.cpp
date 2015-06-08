@@ -7,6 +7,8 @@
 #include <ctime>
 #include "utils.h"
 
+const int _INFINITY = 100000000;
+
 //Principle:
 //   + each function only do one thing
 //   + keep simple, keep stupid
@@ -18,7 +20,7 @@
 /////////////////////////////////////////////////////////////////////////
 // recover the entry rw
 int recover(int sk[], const CMatrix_CSC &cm, int rw) {
-  int m = INFINITY;
+  int m = _INFINITY;
   for (int i = 0; i < mu; ++i) {
     int r = cm.row[rw * mu + i];
     m = std::min(sk[r], m);
