@@ -2,8 +2,6 @@
 #define  __SKETCH_H__
 #include "Algebra.h"
 #include <vector>
-const int MAX_LOGN = 15;
-const int mu = 10;
 /////////////////////////////////////////////////////////////////////////
 /////////////////////// Sketch Related //////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
@@ -17,14 +15,14 @@ void mergeNeighbor(CMatrix_COO &newCoo, CMatrix_COO &oldCoo);
 CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc);
 
 
-CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC& W,
+CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 			   int w, double theta, double rho);
 
 
-// P, Q are boolean matrices
-// theta is a threshold > 0
-// rho \in (0, 1) to control the accuracy
-CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho);
+/* // P, Q are boolean matrices */
+/* // theta is a threshold > 0 */
+/* // rho \in (0, 1) to control the accuracy */
+/* CMatrix_COO atLeastMult(CMatrix_COO &P, CMatrix_COO &Q, double theta, double rho); */
 
 
 

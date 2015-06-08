@@ -9,8 +9,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include "Sketch.h"
 #include "Algebra.h"
 #include "utils.h"
+
 
 
 const int MAX_N = 425876; // limit for # of nodes
@@ -38,14 +40,12 @@ int main(int argc, char **argv) {
   timer.stop("Create CSC Matrix ");
   std::cout << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
 
-  timer.start();
-  CMatrix_CSC&& res = P * P[1];
-  timer.stop("Matrix-Vector Product ");
-  std::cout << "Matrix: " << res.m << "x" << res.n << " nnz = " << res.nnz << std::endl;
-  CMatrix_COO res_coo = toCoo(res);
-  for (int i = 0; i < res_coo.size(); ++i)
-    if (res_coo[i].val > 20)
-      std::cout << res_coo[i].row << ", " << res_coo[i].val << std::endl;
+  // timer.start();
+  // CMatrix_COO&& res = toCoo(P * P);
+  // timer.stop("Matrix-Matrix Product ");
+  CMatrix_CSC&& res = FastThreshMult(P, P, 30, 200, 0.1);
+  toCoo(res).print();
+  //  res.print(100);
   return 0;
 }
 

@@ -8,6 +8,8 @@
 #include "utils.h"
 
 const int _INFINITY = 100000000;
+const int MAX_LOGN = 25;
+const int mu = 5;
 
 //Principle:
 //   + each function only do one thing
@@ -85,10 +87,10 @@ CVector calcL1Norm(const CMatrix_CSC& P, const CMatrix_CSC& Q, const CMatrix_CSC
 // create count min with dim w * mu * n
 CMatrix_CSC createCountMin(int w, int mu, int n) {
   std::srand(time(NULL));
-  int val[mu * n];
+  int *val = new int[mu * n];
   std::fill(val, val + mu * n, 1);
-  int row[mu * n];
-  int col[mu * n];
+  int *row = new int[mu * n];
+  int *col = new int[mu * n];
   int t = 0;
   for (int i = 0; i < n; ++i) 
     for (int j = 0; j < mu; ++j) {
@@ -96,12 +98,16 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
       col[t++] = i;
     }
       
-  return CMatrix_CSC(val, row, col, mu * n, w * mu, n);
+  CMatrix_CSC res(val, row, col, mu * n, w * mu, n, true);
+  delete[] val;
+  delete[] row;
+  delete[] col;
+  return res;
 }
 
 
 // recover entries > theta in P * Q * W
-CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMatrix_CSC &W, 
+CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
 			   int w, double theta, double rho) {
 
   CMatrix_CSC* Ps[MAX_LOGN];
@@ -118,54 +124,46 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMa
   // calc ||P * Q  * W||_1
   //  double R1 = calcL1Norm(P, Q, W);
   // int w = std::ceil(0.1 * R1 / theta / rho);
-  std::cerr << "w = " << w << " mu = " << mu << std::endl;
+  //  std::cerr << "w = " << w << " mu = " << mu << std::endl;
 
   // create sketches
   CMatrix_CSC* CMs[MAX_LOGN];
   CMatrix_CSC sk[MAX_LOGN];
 
-  
 
   timer.start();
   for (int i = 0; i < t; ++i) {
     // create count min sketch
     CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
-    sk[i] = ((*CMs[i] * *Ps[i]) * Q) * W;
+    sk[i] = ((*CMs[i] * *Ps[i]) * Q);// * W;
   }
   timer.stop("Create sketches  ");
 
+
+  
+  // timer.start();
+  // CVector&& R1 = calcL1Norm(P, Q, W);
+  // timer.stop("calcL1Norm(P, Q, W) ");
   
   timer.start();
-  CVector&& R1 = calcL1Norm(P, Q, W);
-  timer.stop("calcL1Norm(P, Q, W) ");
-  
-  timer.start();
+
+
+  ///////////////////////////////////////////
   // recover heavy entries
+  ///////////////////////////////////////////
   CVector val, row, col;
   int skCol[w * mu]; // keep extracted column vector
-  for (int i = 0; i < W.n; ++i) { // for column
 
-    if (2 * R1[i] > 5 * (2 + rho * (w - 2)) * theta) { // use exact algorithm
-      CMatrix_CSC&& res = P * (Q * W[i]);
-      for (int j = 0; j < res.nnz; ++j)
-	if (res.val[j] > theta) {
-	  val.push_back(res.val[j]);
-	  row.push_back(res.row[j]);
-	  col.push_back(i);
-	}
-      //      std::cerr << "Column " << i << " uses exact algorithm" << std::endl;
-      continue;
-    }
-    
-    //    std::cerr << "Column " << i << " uses count min" << std::endl;
-    // use count min
-    CVector ind[MAX_LOGN];
+  for (int i = 0; i < Q.n; ++i) { // for column
+    CVector ind[MAX_LOGN]; // dyadic structure
     ind[t - 1].push_back(0);
     for (int j = t - 1; j >= 0; --j) {
       // convert csc col to int[]
       std::fill(skCol, skCol + w * mu, 0);
       for (int k = sk[j].col_ptr[i]; k < sk[j].col_ptr[i + 1]; ++k)
 	skCol[sk[j].row[k]] += sk[j].val[k];
+      
+
       // now do recover
       for (auto it = ind[j].begin(); it != ind[j].end(); ++it) {
 	if (*it >= Ps[j]->m)
@@ -193,8 +191,8 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, const CMa
   while (--t >= 0) {
     delete Ps[t];
   }
-
-  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, W.n);
+  std::cout << val.size() << std::endl;
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
 }
 
 
