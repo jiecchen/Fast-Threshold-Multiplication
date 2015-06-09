@@ -68,6 +68,10 @@ public:
       n = e.col;
   }
   Element& operator[] (int i) { return data[i]; }
+ 
+
+
+
   friend std::ostream& operator << (std::ostream & os, CMatrix_COO coo);
   void print(double theta = 0) const {
     int ct = 0;
@@ -208,6 +212,22 @@ public:
     }
     return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, 1);
   };
+
+
+  CMatrix_CSC operator[](std::vector<int> indices) const {// return i_th column
+    CVector _val, _row, _col;
+    int ptr = 0;
+    for (auto i = indices.begin(); i != indices.end(); ++i) {
+      for (int t = col_ptr[*i]; t < col_ptr[*i + 1]; ++t) {
+	_val.push_back(val[t]);
+	_row.push_back(row[t]);
+	_col.push_back(ptr);
+      }
+      ptr++;
+    }
+    return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, indices.size());    
+  }
+
 
   ~CMatrix_CSC() {
     delete[] val;

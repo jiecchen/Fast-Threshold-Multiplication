@@ -113,41 +113,24 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 			   int w, double theta, double rho) {
 
 
-  CMatrix_CSC* Ps[MAX_LOGN];
+  CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
   CTimer timer;
-  int t = 0;
+  int t = 0; // # of levels in dyadic structure
   Ps[0] = new CMatrix_CSC(P);
-  //  std::cerr << "Ps[0] = \n" << toCoo(*Ps[0]) << std::endl;
+
   while (Ps[t]->m > 1) {
     Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
     ++t;
   }
   ++t;
 
-  // calc ||P * Q  * W||_1
-  //  double R1 = calcL1Norm(P, Q, W);
-  // int w = std::ceil(0.1 * R1 / theta / rho);
-  //  std::cerr << "w = " << w << " mu = " << mu << std::endl;
-
-  // create sketches
-  CMatrix_CSC* CMs[MAX_LOGN];
-  CMatrix_CSC left_sk[MAX_LOGN];
 
 
-  timer.start();
-  for (int i = 0; i < t; ++i) {
-    // create count min sketch
-    CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
-    left_sk[i] = (*CMs[i] * *Ps[i]);// * W;
-  }
-  timer.stop("Create sketches  ");
-
-
-  
+  // calc L1 norm of P * Q
   CVector&& R1 = calcL1Norm(P, Q);
 
 
-
+  // for debug purpose
   int debug_ct_naive = 0;
   int debug_ct_algor = 0;
 
@@ -159,50 +142,63 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   CVector val, row, col;
   int skCol[w * mu]; // keep extracted column vector
 
-  for (int i = 0; i < Q.n; ++i) { // for column
-
+  std::vector<int> use_exact;
+  std::vector<int> use_sketch;
+  for (int i = 0; i < Q.n; ++i) // for column
     if (R1[i] > (0.6 + rho) * w * theta) { // use exact algorithm
       debug_ct_naive++;
-
-      std::map<int, int> res;
-      
-      for (int j = Q.col_ptr[i]; j < Q.col_ptr[i + 1]; ++j) {
-      	for (int k = P.col_ptr[Q.row[j]]; k < P.col_ptr[Q.row[j] + 1]; ++k)
-      	  res[P.row[k]] += P.val[k] * Q.val[j];
-      }
-      for (auto it = res.begin(); it != res.end(); ++it) 
-      	if (it->second > theta) {
-      	val.push_back(it->second);
-      	row.push_back(it->first);
-      	col.push_back(i);
-      }
-
-      // CMatrix_CSC&& res = P * Q[i];
-      // for (int j = 0; j < res.col_ptr[1]; ++j) 
-      // 	if (res.val[j] > theta) {
-      // 	  val.push_back(res.val[j]);
-      // 	  row.push_back(res.row[j]);
-      // 	  col.push_back(i);
-      // 	}
-      continue;
+      use_exact.push_back(i);
+    }
+    else { // use sketch
+      debug_ct_algor++;
+      use_sketch.push_back(i);
     }
 
-    debug_ct_algor++;
+ 
+  // slicing
+  CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  std::cerr << "exact_part.nnz = " << exact_part.nnz << std::endl;
+  CMatrix_CSC&& slice = Q[use_sketch];
 
-    // create sketch using left_sk
-    CMatrix_CSC sk[MAX_LOGN];
-    for (int j = 0; j < t; ++j)
-      sk[j] = left_sk[j] * Q[i];
+
+  // for the exact calculation part, append entries > theta to result vector
+  int ptr = 0;
+  for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
+    for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
+      if (exact_part.val[i] > theta) {
+	val.push_back(exact_part.val[i]);
+	row.push_back(exact_part.row[i]);
+	col.push_back(*it);
+      }
+    ++ptr;
+  }
 
 
+
+  // create sketch 
+  CMatrix_CSC sk[MAX_LOGN];
+  CMatrix_CSC* CMs[MAX_LOGN];
+  timer.start();
+  for (int i = 0; i < t; ++i) {
+    // create count min sketch
+    CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
+    sk[i] = (*CMs[i] * *Ps[i]) * slice;// * W;
+  }
+  timer.stop("Create sketches  ");
+
+
+  // dealing with use_sketch part
+  ptr = 0;
+  for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
     CVector ind[MAX_LOGN]; // dyadic structure
     ind[t - 1].push_back(0);
     for (int j = t - 1; j >= 0; --j) {
+
       // convert csc col to int[]
       std::fill(skCol, skCol + w * mu, 0);
-      for (int k = sk[j].col_ptr[0]; k < sk[j].col_ptr[1]; ++k)
+      for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
 	skCol[sk[j].row[k]] += sk[j].val[k];
-      
+    
 
       // now do recover
       for (auto it = ind[j].begin(); it != ind[j].end(); ++it) {
@@ -217,13 +213,13 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	  else { // reach level 0, keep the result
 	    val.push_back(v);
 	    row.push_back(*it);
-	    col.push_back(i);
-
+	    col.push_back(*i);
 	  } 
 	} // if
       } // for (auto
     } // for (int j ..      
-  }// for (int i
+    ptr++;
+  }
   timer.stop("Recover heavy coordinates ");
 
 
