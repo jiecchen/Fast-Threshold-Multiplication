@@ -33,8 +33,8 @@ Algebra.o: Algebra.h Algebra.cpp
 	$(CC) $(CFLAGS)  -c Algebra.cpp Algebra.h
 
 
-Sketch.o: Sketch.h Algebra.h Sketch.cpp
-	$(CC) $(CFLAGS) -c Sketch.h Algebra.h Sketch.cpp
+Sketch.o: Sketch.h Algebra.h utils.h Sketch.cpp
+	$(CC) $(CFLAGS) -c *.h Sketch.cpp
 
 clean:
 	$(RM) $(TARGET) *~ *.o *.gch

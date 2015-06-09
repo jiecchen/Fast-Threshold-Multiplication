@@ -108,6 +108,11 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 }
 
 
+
+
+
+
+// ugly, put all thing together to get speedup
 // recover entries > theta in P * Q * W
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
 			   int w, double theta, double rho) {
@@ -135,7 +140,6 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   int debug_ct_algor = 0;
 
   
-  timer.start();
   ///////////////////////////////////////////
   // recover heavy entries
   ///////////////////////////////////////////
@@ -155,12 +159,12 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
     }
 
  
+  //////////////////////////////////////////////////////
+  ///////////////// Using exact algo ///////////////////
+  //////////////////////////////////////////////////////
+  timer.start();
   // slicing
   CMatrix_CSC&& exact_part = P * (Q[use_exact]);
-  std::cerr << "exact_part.nnz = " << exact_part.nnz << std::endl;
-  CMatrix_CSC&& slice = Q[use_sketch];
-
-
   // for the exact calculation part, append entries > theta to result vector
   int ptr = 0;
   for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
@@ -172,12 +176,22 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
       }
     ++ptr;
   }
+  timer.stop("Use exact algo to recover heavy hitters");
 
 
 
+  /////////////////////////////////////////////////////
+  /////////////  Using sketch /////////////////////////
+  /////////////////////////////////////////////////////
+  
+
+  timer.start();
   // create sketch 
+  CMatrix_CSC&& slice = Q[use_sketch];
   CMatrix_CSC sk[MAX_LOGN];
   CMatrix_CSC* CMs[MAX_LOGN];
+
+
   timer.start();
   for (int i = 0; i < t; ++i) {
     // create count min sketch
@@ -220,7 +234,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
     } // for (int j ..      
     ptr++;
   }
-  timer.stop("Recover heavy coordinates ");
+  timer.stop("Use sketch to recover heavy coordinates ");
 
 
   // release memory
