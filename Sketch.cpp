@@ -11,7 +11,7 @@
 
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
-const int mu = 2;
+const int mu = 3;
 
 //Principle:
 //   + each function only do one thing
@@ -144,9 +144,8 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
   
-  timer.start();
   CVector&& R1 = calcL1Norm(P, Q);
-  timer.stop("calcL1Norm(P, Q) ");
+
 
 
   int debug_ct_naive = 0;
@@ -167,10 +166,10 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
       std::map<int, int> res;
       
-      for (int j = Q.col_ptr[i]; j < Q.col_ptr[i + 1]; ++j) 
+      for (int j = Q.col_ptr[i]; j < Q.col_ptr[i + 1]; ++j) {
       	for (int k = P.col_ptr[Q.row[j]]; k < P.col_ptr[Q.row[j] + 1]; ++k)
       	  res[P.row[k]] += P.val[k] * Q.val[j];
-
+      }
       for (auto it = res.begin(); it != res.end(); ++it) 
       	if (it->second > theta) {
       	val.push_back(it->second);
