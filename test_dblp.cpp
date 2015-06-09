@@ -23,8 +23,8 @@ int main(int argc, char **argv) {
     std::cerr << "Check your input!" << std::endl;
     std::exit(1);
   }
-  int N = 34580;
-  int M = 34540;
+  int N = 5000;
+  int M = 5000;
   CTimer timer;
   timer.start();
   CMatrix_COO coo(N, M);
@@ -43,18 +43,19 @@ int main(int argc, char **argv) {
   timer.stop("Create CSC Matrix ");
   std::cout << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
   
-  double theta= 300;
+  double theta= 100;
 
-  // timer.start();
-  // CMatrix_COO&& res = toCoo(P * Q);
-  // res.print(theta);
-  // timer.stop("Naive P * P ");
+  timer.start();
+  CMatrix_COO&& res = toCoo(P * Q);
+  res.print(theta);
+  timer.stop("Naive P * P ");
+
 
 
 
 
   timer.start();
-  CMatrix_COO&& new_res = toCoo(FastThreshMult(P, Q, 10, theta, 0.3));
+  CMatrix_COO&& new_res = toCoo(FastThreshMult(P, Q, 30, theta, 0.3));
   timer.stop("Use Our Algorithm ");
   new_res.print();
   return 0;
