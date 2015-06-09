@@ -5,11 +5,13 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <map>
 #include "utils.h"
+
 
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
-const int mu = 3;
+const int mu = 2;
 
 //Principle:
 //   + each function only do one thing
@@ -150,7 +152,6 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   int debug_ct_naive = 0;
   int debug_ct_algor = 0;
 
-
   
   timer.start();
   ///////////////////////////////////////////
@@ -161,15 +162,29 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
   for (int i = 0; i < Q.n; ++i) { // for column
 
-    if (R1[i] > 0.4 * w * theta) { // use exact algorithm
+    if (R1[i] > (0.6 + rho) * w * theta) { // use exact algorithm
       debug_ct_naive++;
-      CMatrix_CSC&& res = P * Q[i];
-      for (int j = 0; j < res.col_ptr[1]; ++j) 
-	if (res.val[j] > theta) {
-	  val.push_back(res.val[j]);
-	  row.push_back(res.row[j]);
-	  col.push_back(i);
-	}
+
+      std::map<int, int> res;
+      
+      for (int j = Q.col_ptr[i]; j < Q.col_ptr[i + 1]; ++j) 
+      	for (int k = P.col_ptr[Q.row[j]]; k < P.col_ptr[Q.row[j] + 1]; ++k)
+      	  res[P.row[k]] += P.val[k] * Q.val[j];
+
+      for (auto it = res.begin(); it != res.end(); ++it) 
+      	if (it->second > theta) {
+      	val.push_back(it->second);
+      	row.push_back(it->first);
+      	col.push_back(i);
+      }
+
+      // CMatrix_CSC&& res = P * Q[i];
+      // for (int j = 0; j < res.col_ptr[1]; ++j) 
+      // 	if (res.val[j] > theta) {
+      // 	  val.push_back(res.val[j]);
+      // 	  row.push_back(res.row[j]);
+      // 	  col.push_back(i);
+      // 	}
       continue;
     }
 

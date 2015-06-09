@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
   
   CTimer timer;
   timer.start();
-  CMatrix_COO coo(5000, 5000);
+  CMatrix_COO coo(4605, 4605);
   std::ifstream fin(argv[1]);
   int row, col;
   while (fin >> row >> col) {
@@ -39,16 +39,19 @@ int main(int argc, char **argv) {
   CMatrix_CSC P(coo, false);
   timer.stop("Create CSC Matrix ");
   std::cout << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
+  
+  double theta= 600;
 
   timer.start();
   CMatrix_COO&& res = toCoo(P * P);
+  res.print(theta);
   timer.stop("Naive P * P ");
-  res.print(900);
+
 
 
 
   timer.start();
-  CMatrix_COO&& new_res = toCoo(FastThreshMult(P, P, 20, 900, 0.1));
+  CMatrix_COO&& new_res = toCoo(FastThreshMult(P, P, 20, theta, 0.01));
   timer.stop("Use Our Algorithm ");
   new_res.print();
   return 0;
