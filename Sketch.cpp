@@ -131,14 +131,14 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
   // create sketches
   CMatrix_CSC* CMs[MAX_LOGN];
-  CMatrix_CSC sk[MAX_LOGN];
+  CMatrix_CSC left_sk[MAX_LOGN];
 
 
   timer.start();
   for (int i = 0; i < t; ++i) {
     // create count min sketch
     CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
-    sk[i] = ((*CMs[i] * *Ps[i]) * Q);// * W;
+    left_sk[i] = (*CMs[i] * *Ps[i]);// * W;
   }
   timer.stop("Create sketches  ");
 
@@ -189,12 +189,18 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
     debug_ct_algor++;
 
+    // create sketch using left_sk
+    CMatrix_CSC sk[MAX_LOGN];
+    for (int j = 0; j < t; ++j)
+      sk[j] = left_sk[j] * Q[i];
+
+
     CVector ind[MAX_LOGN]; // dyadic structure
     ind[t - 1].push_back(0);
     for (int j = t - 1; j >= 0; --j) {
       // convert csc col to int[]
       std::fill(skCol, skCol + w * mu, 0);
-      for (int k = sk[j].col_ptr[i]; k < sk[j].col_ptr[i + 1]; ++k)
+      for (int k = sk[j].col_ptr[0]; k < sk[j].col_ptr[1]; ++k)
 	skCol[sk[j].row[k]] += sk[j].val[k];
       
 
