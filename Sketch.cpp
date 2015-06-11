@@ -1,6 +1,7 @@
 #include "Algebra.h"
 #include "Sketch.h"
 #include <numeric>
+#include <limits>
 //#include <iomanip>
 #include <cmath>
 #include <cstdlib>
@@ -9,10 +10,10 @@
 #include "utils.h"
 
 
-const int _INFINITY = 100000000;
+const int _INFINITY = std::numeric_limits<int>::infinity();
 const int MAX_LOGN = 25;
-const int mu = 3;
-const double alpha = 1.0;
+const int mu = 6;
+const double alpha = 1.;
 const int STEP_SIZE = 500; // how many neighbors to be merged
 
 
@@ -112,7 +113,55 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 
 
 
+// return w as # of buckets to optimize the running time
+int optimalBucketsSize(const CVector& R1, const CMatrix_CSC& Q, double rho, double theta) {
+  SparseVector R_1; // to keep R1
+  SparseVector Q_0; // to keep ||Q||_1
+  for (unsigned int i = 0; i < R1.size(); ++i)
+    R_1.push_back(VectorElement(i, R1[i]));
+  std::sort(
+	    R_1.begin(), R_1.end(), 
+	    [](const VectorElement& a, const VectorElement& b) {
+	      return a.val > b.val;
+	    }
+	    );
 
+
+  int tot = 0;
+  for (auto it = R_1.begin(); it != R_1.end(); ++it) {
+    tot += it->val;
+    it->val = tot;
+    Q_0.push_back(VectorElement(it->ind, Q.get_nnz(it->ind)));
+  }
+  
+  tot = 0;
+  for (auto it = Q_0.end() - 1; it + 1 != Q_0.begin(); --it) {
+    tot += it->val;
+    it->val = tot;
+  }
+  Q_0.push_back(VectorElement(-1, 0));
+
+
+
+  double min_cost = std::numeric_limits<double>::infinity();
+  double w = 0;
+
+  for (unsigned int t = 0; t < R_1.size(); ++t) {
+    double _w = 4. * R1[R_1[t + 1].ind] / ((rho + alpha) * theta);
+    double new_cost = 25 * R_1[t].val  +  mu * _w * Q_0[t + 1].val;
+    // std::cerr << R_1[t].val << "  " << R1[R_1[t + 1].ind] << "  " << _w << "  " <<  Q_0[t + 1].val << "  new_cost = " << new_cost << std::endl;
+    if (_w < 5)
+      _w = 5;
+    if (new_cost < min_cost) {
+      min_cost = new_cost;
+      w = _w;
+      //      std::cerr << "w <- " << w << " cost <- " << min_cost  << " t = " << t << std::endl;
+    }
+  }
+  
+  std::cerr << "Optimal w = " << (int) w << std::endl;
+  return (int) w;
+}
 
 
 // ugly, put all thing together to get speedup
@@ -140,6 +189,8 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   // calc L1 norm of P * Q
   CVector&& R1 = calcL1Norm(P, Q);
 
+  int _w = optimalBucketsSize(R1, Q, rho, theta);
+  w = _w;
 
   // for debug purpose
   int debug_ct_naive = 0;
@@ -206,11 +257,17 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
   timer.start("sketch matrix");
+  timer.start("Create count-min & sketch P");
   for (int i = 0; i < t; ++i) {
     // create count min sketch
     CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
-    sk[i] = (*CMs[i] * *Ps[i]) * slice;// * W;
+    sk[i] = (*CMs[i] * *Ps[i]); // * W;
   }
+  timer.stop();
+  timer.start("Sketch Q");
+  for (int i = 0; i < t; ++i)
+    sk[i] = sk[i] * slice;
+  timer.stop();
   timer.stop();
 
 

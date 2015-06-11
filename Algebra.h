@@ -235,6 +235,16 @@ public:
     delete[] col_ptr;
   };
 
+
+
+  // return nnz of a column
+  int get_nnz(int ind_col) const {
+    return col_ptr[ind_col + 1] - col_ptr[ind_col];
+  }
+
+
+
+
   int m, n;
   int nnz;
   int *val;
@@ -274,8 +284,7 @@ CMatrix_COO toCoo(const CMatrix_CSC &mat);
 /* // complexity O(nnz(P)) */
 /* void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh); */
 
-/* std::ostream& operator << (std::ostream &os,  const SparseVector &vec);  */
-
+std::ostream& operator << (std::ostream &os,  const VectorElement& e);
 /* // sum rows of an coo matrix */
 /* void sumRows_Coo(int *result, CMatrix_COO &P); */
 /* // inner product v * sv */

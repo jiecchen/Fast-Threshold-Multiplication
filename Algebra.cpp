@@ -228,6 +228,11 @@ std::ostream& operator << (std::ostream &os,  const SparseVector &vec) {
 }
 
 
+std::ostream& operator << (std::ostream &os,  const VectorElement& e) {
+  os << e.ind << ", " << e.val;
+  return os;
+}
+
 
 
 bool operator < (const Element &lh, const Element &rh) {
