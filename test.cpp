@@ -23,7 +23,23 @@ void test_csc(CMatrix_CSC &P, CMatrix_CSC &Q) {
 
 
 
-const int MAX_NNZ = 2000000;
+void test_CSC_constructor() {
+  CMatrix_COO coo(5, 5);
+  coo.push_back(Element(1, 4, 3));
+  coo.push_back(Element(1, 2, 3));
+  coo.push_back(Element(2, 2, 10));
+  coo.push_back(Element(2, 3, 100));
+  coo.push_back(Element(1, 0, 3));
+  CMatrix_CSC csc(coo);
+  std::cout << "coo =\n" << coo << "\ncsc =\n" << toCoo(csc) << std::endl;
+
+  // test slicing
+  CVector ids = {0,3,4};
+  std::cout << "slicing:\n " <<  toCoo(csc[ids]) << std::endl;
+}
+
+
+const int MAX_NNZ = 2000;
 int row[MAX_NNZ];
 int col[MAX_NNZ];
 int val[MAX_NNZ];
@@ -32,46 +48,48 @@ int val[MAX_NNZ];
 
 
 int main() {
-  int Pm, Pn, nnz;
-  CTimer timer;
-  timer.start();
-  std::cin >> Pm >> Pn;
-  std::cin >> nnz;
-  for (int i = 0; i < nnz; ++i) {
-    std::cin >> row[i] >> col[i] >> val[i];
-  }   
-  CMatrix_CSC P(val, row, col, nnz, Pm, Pn);
+
+  // int Pm, Pn, nnz;
+  // CTimer timer;
+  // timer.start();
+  // std::cin >> Pm >> Pn;
+  // std::cin >> nnz;
+  // for (int i = 0; i < nnz; ++i) {
+  //   std::cin >> row[i] >> col[i] >> val[i];
+  // }   
+  // CMatrix_CSC P(val, row, col, nnz, Pm, Pn);
   
-  int Qm, Qn;
-  std::cin >> Qm >> Qn;
-  std::cin >> nnz;
-  for (int i = 0; i < nnz; ++i) {
-    std::cin >> row[i] >> col[i] >> val[i];
-  }   
-  CMatrix_CSC Q(val, row, col, nnz, Qm, Qn);
+  // int Qm, Qn;
+  // std::cin >> Qm >> Qn;
+  // std::cin >> nnz;
+  // for (int i = 0; i < nnz; ++i) {
+  //   std::cin >> row[i] >> col[i] >> val[i];
+  // }   
+  // CMatrix_CSC Q(val, row, col, nnz, Qm, Qn);
 
-  int Wm, Wn;
-  std::cin >> Wm >> Wn;
-  std::cin >> nnz;
-  for (int i = 0; i < nnz; ++i) {
-    std::cin >> row[i] >> col[i] >> val[i];
-  }   
-  CMatrix_CSC W(val, row, col, nnz, Wm, Wn);
-  timer.stop("Read P Q W ");
-  //  test_csc(P, Q);
-  //  test_mergeNeighbor(P);
+  // int Wm, Wn;
+  // std::cin >> Wm >> Wn;
+  // std::cin >> nnz;
+  // for (int i = 0; i < nnz; ++i) {
+  //   std::cin >> row[i] >> col[i] >> val[i];
+  // }   
+  // CMatrix_CSC W(val, row, col, nnz, Wm, Wn);
+  // timer.stop("Read P Q W ");
+  // //  test_csc(P, Q);
+  // //  test_mergeNeighbor(P);
 
-  // std::cout << "P * Q = \n" << toCoo(P * Q) << std::endl 
-  // 	    << "Q * W = \n" << toCoo(Q * W) << std::endl;
-  timer.start();
+  // // std::cout << "P * Q = \n" << toCoo(P * Q) << std::endl 
+  // // 	    << "Q * W = \n" << toCoo(Q * W) << std::endl;
+  // timer.start();
   // CMatrix_CSC ans = P * Q * W;
-  timer.stop("Calculate P * Q * W ");
-  //std::cout << "P * Q * W =\n" << toCoo(ans) << std::endl;
-  timer.start();
-  CMatrix_CSC A = FastThreshMult(P, Q, W, 3, 200000, 0.5);
+  // timer.stop("Calculate P * Q * W ");
+  // //std::cout << "P * Q * W =\n" << toCoo(ans) << std::endl;
+  // timer.start();
+  // CMatrix_CSC A = FastThreshMult(P, Q, W, 3, 200000, 0.5);
   
-  timer.stop("FastThreshMult ");
-  std::cout << toCoo(A) << std::endl;
+  // timer.stop("FastThreshMult ");
+  // // std::cout << toCoo(A) << std::endl;
+  test_CSC_constructor();
   return 0;
 
 }
