@@ -78,7 +78,7 @@ public:
     for (const Element &e: data)
       if (e.val > theta)
 	ct++;
-    std::cout << "size = " << ct << std::endl;
+    std::cerr << "Output size = " << ct << std::endl;
 
     for (const Element &e: data)
       if (e.val > theta)
