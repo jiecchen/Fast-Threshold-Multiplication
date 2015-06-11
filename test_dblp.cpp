@@ -1,3 +1,4 @@
+
 /*
   Run test for dblp data.
 
@@ -53,10 +54,8 @@ int main(int argc, char **argv) {
 
 
 
-
-
   timer.start();
-  CMatrix_COO&& new_res = toCoo(FastThreshMult(P, Q, 30, theta, 0.3));
+  CMatrix_COO&& new_res = toCoo(FastThreshMult_Simple(P, Q, 50, theta, 0.1));
   timer.stop("Use Our Algorithm ");
   new_res.print();
   return 0;
