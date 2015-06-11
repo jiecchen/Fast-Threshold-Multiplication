@@ -31,11 +31,11 @@ if __name__ == '__main__':
             ls = line.split()
             print(str2num[ls[0]], str2num[ls[1]])
 
-    N = 10
-    for i in range(N):
-        for j in range(r_max):
-            print(i, j)
-            print(j, i)
+     # N = 10
+     # for i in range(N):
+     #     for j in range(r_max):
+     #         print(i, j)
+     #         print(j, i)
             
             
 
