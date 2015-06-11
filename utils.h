@@ -6,14 +6,22 @@
 #include <stack>
 
 class CTimer {
-  
+  std::string _msg;
   std::stack<clock_t> _start;
  public:
-  void start() { _start.push(std::clock()); }
+  void start(std::string msg = "") {
+    this->_msg = msg;
+    _start.push(std::clock());
+    for (unsigned int i = 0; i < _start.size(); ++i)
+      std::cerr << ">> ";
+    std::cerr << msg << std::endl;
+
+
+  }
   void stop(std::string msg = "") {
     for (unsigned int i = 0; i < _start.size(); ++i)
       std::cerr << ">> ";
-    std::cerr << msg +  " Elapsed: "
+    std::cerr << this->_msg +  " Elapsed: "
 	      << (std::clock() - _start.top()) / (double) CLOCKS_PER_SEC
 	      << " secs" << std::endl;	     
     _start.pop();

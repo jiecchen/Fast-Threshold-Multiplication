@@ -281,11 +281,15 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
       use_sketch.push_back(i);
     }
 
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+
+  
  
   //////////////////////////////////////////////////////
   ///////////////// Using exact algo ///////////////////
   //////////////////////////////////////////////////////
-  timer.start();
+  timer.start("Use exact algo");
   // slicing
   CMatrix_CSC&& exact_part = P * (Q[use_exact]);
   // for the exact calculation part, append entries > theta to result vector
@@ -299,7 +303,7 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
       }
     ++ptr;
   }
-  timer.stop("Use exact algo to recover heavy hitters");
+  timer.stop();
 
 
 
@@ -308,17 +312,18 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   /////////////////////////////////////////////////////
   
 
-  timer.start();
+  timer.start("Create sketches");
   // create sketch 
   CMatrix_CSC&& slice = Q[use_sketch];
+  timer.stop();
 
-
-  timer.start();
+  timer.start("Skech the matrix");
   CMatrix_CSC CM(createCountMin(w, mu, P.m)); 
   CMatrix_CSC sk((CM * P) * slice);
-  timer.stop("Create sketches  ");
+  timer.stop();
 
 
+  timer.start("Use sketch to recover");
   // dealing with use_sketch part
   ptr = 0;
   for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
@@ -340,9 +345,7 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
     ptr++;
   } // for (int i
     
-  timer.stop("Use sketch to recover heavy coordinates ");
+  timer.stop();
   
-  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
-	    << " columns use Sketch." << std::endl;
   return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
 }
