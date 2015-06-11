@@ -1,7 +1,7 @@
 Notes
 ========
 
-## idea
+## ideas
 + The problem to use CountSketch  is that it is difficult to
   decide when we should use exact algorithm
 
