@@ -13,7 +13,7 @@ const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
 const int mu = 3;
 const double alpha = 1.0;
-const int STEP_SIZE = 800; // how many neighbors to be merged
+const int STEP_SIZE = 500; // how many neighbors to be merged
 
 
 //Principle:
@@ -53,7 +53,7 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
 	continue;
       }
       
-      if ((oldCsc.row[j] - STEP_SIZE) < row.back()) 
+      if ((oldCsc.row[j] / STEP_SIZE) == row.back()) 
 	val.back() += oldCsc.val[j];
       else {
 	val.push_back(oldCsc.val[j]);
@@ -173,8 +173,11 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   //////////////////////////////////////////////////////
   timer.start("Use exact algo");
   // slicing
+  timer.start("exact matrix multilication");
   CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  timer.stop();
   // for the exact calculation part, append entries > theta to result vector
+  timer.start("pick up heavy hitters");
   int ptr = 0;
   for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
     for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
@@ -185,6 +188,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
       }
     ++ptr;
   }
+  timer.stop();
   timer.stop();
 
 
