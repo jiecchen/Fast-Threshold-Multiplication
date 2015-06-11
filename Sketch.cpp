@@ -12,7 +12,10 @@
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
 const int mu = 3;
-const double alpha = 0.9;
+const double alpha = 1.0;
+const int STEP_SIZE = 400; // how many neighbors to be merged
+
+
 //Principle:
 //   + each function only do one thing
 //   + keep simple, keep stupid
@@ -45,16 +48,16 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
     for (int j = oldCsc.col_ptr[i]; j < oldCsc.col_ptr[i + 1]; ++j) {
       if (j == oldCsc.col_ptr[i]) {
 	val.push_back(oldCsc.val[j]);
-	row.push_back(oldCsc.row[j] >> 1);
+	row.push_back(oldCsc.row[j] / STEP_SIZE);
 	col.push_back(i);
 	continue;
       }
       
-      if ((oldCsc.row[j] >> 1) == row.back()) 
+      if ((oldCsc.row[j] - STEP_SIZE) < row.back()) 
 	val.back() += oldCsc.val[j];
       else {
 	val.push_back(oldCsc.val[j]);
-	row.push_back(oldCsc.row[j] >> 1);
+	row.push_back(oldCsc.row[j] / STEP_SIZE);
 	col.push_back(i);
       }
     }// for j    
@@ -122,6 +125,9 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   CTimer timer;
   int t = 0; // # of levels in dyadic structure
   Ps[0] = new CMatrix_CSC(P);
+
+
+
 
   while (Ps[t]->m > 1) {
     Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
@@ -225,8 +231,10 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	int v = recover(skCol, *CMs[j], *it);
 	if (v > theta) {
 	  if (j > 0) { // has not reached level 0  
-	    ind[j - 1].push_back((*it) * 2);
-	    ind[j - 1].push_back((*it) * 2 + 1);
+	    for (int j0 = 0; j0 < STEP_SIZE; ++j0)
+	      ind[j - 1].push_back((*it) * STEP_SIZE + j0);
+	    //ind[j - 1].push_back((*it) * 2);
+	    //ind[j - 1].push_back((*it) * 2 + 1);
 	  }
 	  else { // reach level 0, keep the result
 	    val.push_back(v);
