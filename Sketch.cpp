@@ -12,7 +12,7 @@
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
 const int mu = 3;
-
+const double alpha = 1;
 //Principle:
 //   + each function only do one thing
 //   + keep simple, keep stupid
@@ -149,7 +149,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   std::vector<int> use_exact;
   std::vector<int> use_sketch;
   for (int i = 0; i < Q.n; ++i) // for column
-    if (R1[i] > (0.6 + rho) * w * theta) { // use exact algorithm
+    if (R1[i] > (alpha + rho) / 4. * w * theta) { // use exact algorithm
       debug_ct_naive++;
       use_exact.push_back(i);
     }
@@ -249,3 +249,100 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 }
 
 
+
+
+CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
+			   int w, double theta, double rho) {
+
+  // calc L1 norm of P * Q
+  CVector&& R1 = calcL1Norm(P, Q);
+
+  CTimer timer;
+  // for debug purpose
+  int debug_ct_naive = 0;
+  int debug_ct_algor = 0;
+
+  
+  ///////////////////////////////////////////
+  // recover heavy entries
+  ///////////////////////////////////////////
+  CVector val, row, col;
+  int skCol[w * mu]; // keep extracted column vector
+
+  std::vector<int> use_exact;
+  std::vector<int> use_sketch;
+  for (int i = 0; i < Q.n; ++i) // for column
+    if (R1[i] > (alpha + rho) / 4. * w * theta) { // use exact algorithm
+      debug_ct_naive++;
+      use_exact.push_back(i);
+    }
+    else { // use sketch
+      debug_ct_algor++;
+      use_sketch.push_back(i);
+    }
+
+ 
+  //////////////////////////////////////////////////////
+  ///////////////// Using exact algo ///////////////////
+  //////////////////////////////////////////////////////
+  timer.start();
+  // slicing
+  CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  // for the exact calculation part, append entries > theta to result vector
+  int ptr = 0;
+  for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
+    for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
+      if (exact_part.val[i] > theta) {
+	val.push_back(exact_part.val[i]);
+	row.push_back(exact_part.row[i]);
+	col.push_back(*it);
+      }
+    ++ptr;
+  }
+  timer.stop("Use exact algo to recover heavy hitters");
+
+
+
+  /////////////////////////////////////////////////////
+  /////////////  Using sketch /////////////////////////
+  /////////////////////////////////////////////////////
+  
+
+  timer.start();
+  // create sketch 
+  CMatrix_CSC&& slice = Q[use_sketch];
+
+
+  timer.start();
+  CMatrix_CSC CM(createCountMin(w, mu, P.m)); 
+  CMatrix_CSC sk((CM * P) * slice);
+  timer.stop("Create sketches  ");
+
+
+  // dealing with use_sketch part
+  ptr = 0;
+  for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
+    // convert csc col to int[]
+    std::fill(skCol, skCol + w * mu, 0);
+    for (int k = sk.col_ptr[ptr]; k < sk.col_ptr[ptr + 1]; ++k)
+      skCol[sk.row[k]] += sk.val[k];
+    
+
+    // now do recover
+    for (auto it = 0; it < P.m; ++it) {
+      int v = recover(skCol, CM, it);
+	if (v > theta) {
+	  val.push_back(v);
+	  row.push_back(it);
+	  col.push_back(*i);
+	} 
+    } // for (auto
+    ptr++;
+  } // for (int i
+    
+  timer.stop("Use sketch to recover heavy coordinates ");
+  
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
+}
