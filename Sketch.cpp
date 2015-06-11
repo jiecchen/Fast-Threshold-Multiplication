@@ -12,7 +12,7 @@
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
 const int mu = 3;
-const double alpha = 1;
+const double alpha = 0.9;
 //Principle:
 //   + each function only do one thing
 //   + keep simple, keep stupid
@@ -158,11 +158,14 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
       use_sketch.push_back(i);
     }
 
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+  
  
   //////////////////////////////////////////////////////
   ///////////////// Using exact algo ///////////////////
   //////////////////////////////////////////////////////
-  timer.start();
+  timer.start("Use exact algo");
   // slicing
   CMatrix_CSC&& exact_part = P * (Q[use_exact]);
   // for the exact calculation part, append entries > theta to result vector
@@ -176,7 +179,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
       }
     ++ptr;
   }
-  timer.stop("Use exact algo to recover heavy hitters");
+  timer.stop();
 
 
 
@@ -185,22 +188,23 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   /////////////////////////////////////////////////////
   
 
-  timer.start();
+  timer.start("Use sketch");
   // create sketch 
   CMatrix_CSC&& slice = Q[use_sketch];
   CMatrix_CSC sk[MAX_LOGN];
   CMatrix_CSC* CMs[MAX_LOGN];
 
 
-  timer.start();
+  timer.start("sketch matrix");
   for (int i = 0; i < t; ++i) {
     // create count min sketch
     CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
     sk[i] = (*CMs[i] * *Ps[i]) * slice;// * W;
   }
-  timer.stop("Create sketches  ");
+  timer.stop();
 
 
+  timer.start("Do recovering");
   // dealing with use_sketch part
   ptr = 0;
   for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
@@ -234,17 +238,16 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
     } // for (int j ..      
     ptr++;
   }
-  timer.stop("Use sketch to recover heavy coordinates ");
+  timer.stop();
 
 
   // release memory
   while (--t >= 0) {
     delete Ps[t];
   }
-  
-  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
-	    << " columns use Sketch." << std::endl;
 
+  timer.stop();
+  
   return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
 }
 
