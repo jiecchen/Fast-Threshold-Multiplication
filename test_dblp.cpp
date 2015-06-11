@@ -14,26 +14,27 @@
 #include "utils.h"
 
 
-
-const int MAX_N = 425876; // limit for # of nodes
-const int MAX_M = 3000000; // limit for # of edges
-
 int main(int argc, char **argv) {
   if (argc != 2) {
     std::cerr << "Check your input!" << std::endl;
     std::exit(1);
   }
-  int N = 5000;
-  int M = 5000;
   CTimer timer;
   timer.start();
-  CMatrix_COO coo(N, M);
+  CMatrix_COO coo;
   std::ifstream fin(argv[1]);
+  int M = 0;
+  int N = 0;
   int row, col;
   while (fin >> row >> col) {
+    M = std::max(M,row);
+    N = std::max(N, col);
     coo.push_back(Element(row, col, 1));
     //    coo.push_back(Element(col, row, 1));
   }
+  ++N;
+  ++M;
+  coo.set_mn(M, N);
   fin.close();
   timer.stop("Read data ");
   timer.start();
