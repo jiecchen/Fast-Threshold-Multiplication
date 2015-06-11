@@ -25,6 +25,7 @@ Notes
   need new formula to estimate the running time.
   also this http://www.cs.berkeley.edu/~yelick/cs267-sp04/lectures/
 
++ why not splitting the vector R_i to blocks? Will have some speedup?
 
 
 ## What I learned from this work

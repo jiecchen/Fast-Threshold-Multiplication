@@ -12,9 +12,9 @@
 
 const int _INFINITY = std::numeric_limits<int>::infinity();
 const int MAX_LOGN = 25;
-const int mu = 6;
+const int mu = 3;
 const double alpha = 1.;
-const int STEP_SIZE = 500; // how many neighbors to be merged
+int STEP_SIZE = 500; // how many neighbors to be merged
 
 
 //Principle:
@@ -113,6 +113,7 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 
 
 
+
 // return w as # of buckets to optimize the running time
 int optimalBucketsSize(const CVector& R1, const CMatrix_CSC& Q, double rho, double theta) {
   SparseVector R_1; // to keep R1
@@ -148,10 +149,10 @@ int optimalBucketsSize(const CVector& R1, const CMatrix_CSC& Q, double rho, doub
 
   for (unsigned int t = 0; t < R_1.size(); ++t) {
     double _w = 4. * R1[R_1[t + 1].ind] / ((rho + alpha) * theta);
-    double new_cost = 25 * R_1[t].val  +  mu * _w * Q_0[t + 1].val;
+    double new_cost =  2.9 * R_1[t].val  +  mu * _w * Q_0[t + 1].val;
     // std::cerr << R_1[t].val << "  " << R1[R_1[t + 1].ind] << "  " << _w << "  " <<  Q_0[t + 1].val << "  new_cost = " << new_cost << std::endl;
-    if (_w < 5)
-      _w = 5;
+    if (_w < 1)
+      _w = 1;
     if (new_cost < min_cost) {
       min_cost = new_cost;
       w = _w;
@@ -164,11 +165,16 @@ int optimalBucketsSize(const CVector& R1, const CMatrix_CSC& Q, double rho, doub
 }
 
 
+
+
+
 // ugly, put all thing together to get speedup
 // recover entries > theta in P * Q * W
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
-			   int w, double theta, double rho) {
+			   double theta, double rho, int w) {
 
+  // set up the step_size to merge neighbor
+  STEP_SIZE = (int) std::min(std::sqrt(P.n) * 20 + 1, P.n / 2.);
 
   CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
   CTimer timer;
@@ -188,10 +194,9 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
   // calc L1 norm of P * Q
   CVector&& R1 = calcL1Norm(P, Q);
-
-  int _w = optimalBucketsSize(R1, Q, rho, theta);
-  w = _w;
-
+  if (w < 1)
+    w = optimalBucketsSize(R1, Q, rho, theta);
+  
   // for debug purpose
   int debug_ct_naive = 0;
   int debug_ct_algor = 0;
@@ -257,17 +262,11 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
   timer.start("sketch matrix");
-  timer.start("Create count-min & sketch P");
   for (int i = 0; i < t; ++i) {
     // create count min sketch
     CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
-    sk[i] = (*CMs[i] * *Ps[i]); // * W;
+    sk[i] = (*CMs[i] * *Ps[i]) * slice;// * W;
   }
-  timer.stop();
-  timer.start("Sketch Q");
-  for (int i = 0; i < t; ++i)
-    sk[i] = sk[i] * slice;
-  timer.stop();
   timer.stop();
 
 
@@ -324,10 +323,13 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
 CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
-			   int w, double theta, double rho) {
+				  double theta, double rho, int w) {
 
   // calc L1 norm of P * Q
   CVector&& R1 = calcL1Norm(P, Q);
+
+  if (w < 1)
+    w = optimalBucketsSize(R1, Q, rho, theta);
 
   CTimer timer;
   // for debug purpose

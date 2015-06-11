@@ -16,10 +16,10 @@
 
 
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
-			   int w, double theta, double rho);
+			   double theta, double rho, int w=0);
 
 CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
-				  int w, double theta, double rho);
+				  double theta, double rho, int w=0);
 
 
 /* // P, Q are boolean matrices */
