@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   timer.stop("Create CSC Matrix ");
   std::cout << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
   
-  double theta= 100;
+  double theta= 400;
 
   timer.start();
   CMatrix_COO&& res = toCoo(P * Q);
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 
 
   timer.start();
-  CMatrix_COO&& new_res = toCoo(FastThreshMult_Simple(P, Q, 50, theta, 0.1));
+  CMatrix_COO&& new_res = toCoo(FastThreshMult_Simple(P, Q, 10, theta, 0.2));
   timer.stop("Use Our Algorithm ");
   new_res.print();
   return 0;
