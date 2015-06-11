@@ -13,6 +13,26 @@ Notes
   group the columns in Q be Qh and Ql, the T will be
   T = ||R*Qh||_1 + beta * mu * w * nnz(Ql)
   beta is a constant to be estimated.
+  also need to optimize STEP_SIZE
 
++ add comparasison to matlab if my implementation of sparse multiplication
+  is truely faster than matlab.
+
++ read some papers for paralell sparse matrix multiplication,
+  discuss how to extend our algorithm in that seting.
+  read this http://gauss.cs.ucsb.edu/~aydin/spgemm_sisc12.pdf
+  for parallel sparse matrix multiplication.
+  need new formula to estimate the running time.
+  also this http://www.cs.berkeley.edu/~yelick/cs267-sp04/lectures/
+
+
+
+## What I learned from this work
++ implement the algorithm will help you to **think**.
+  easy to see the bottleneck.
+
++ work on the problem **after** we found strong motivation.
+
++ need sort of theory to support the idea.
 
 
