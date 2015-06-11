@@ -11,7 +11,7 @@
 
 const int _INFINITY = 100000000;
 const int MAX_LOGN = 25;
-const int mu = 3;
+const int mu = 4;
 
 //Principle:
 //   + each function only do one thing
@@ -32,6 +32,23 @@ int recover(int sk[], const CMatrix_CSC &cm, int rw) {
   //  std::cerr << "m = " << m << std::endl;
   return m;
 }
+
+// recover the entry rw
+int recover_count(int sk[], const CMatrix_CSC &cm, int rw) {
+  std::vector<int> arr;
+  
+  for (int i = 0; i < mu; ++i) {
+    int r = cm.row[rw * mu + i];
+    int sign = cm.val[rw * mu + i];
+    arr.push_back(sign * sk[r]);
+    //    m = std::min(sk[r], m);
+  }
+  std::sort(arr.begin(), arr.end());
+  //  std::cerr << "m = " << m << std::endl;
+  return arr[arr.size() / 2];
+}
+
+
 
 
 // let oldCsc = [R_0; R_1; R_2; R_3; ...]
@@ -108,8 +125,168 @@ CMatrix_CSC createCountMin(int w, int mu, int n) {
 }
 
 
+// create count sketch with dim w * mu * n
+CMatrix_CSC createCountSketch(int w, int mu, int n) {
+  std::srand(time(NULL));
+  int *val = new int[mu * n];
+  //  std::fill(val, val + mu * n, 1);
+  int *row = new int[mu * n];
+  int *col = new int[mu * n];
+  int t = 0;
+  for (int i = 0; i < n; ++i) 
+    for (int j = 0; j < mu; ++j) {
+      val[t] = std::rand() % 2 * 2 - 1;
+      row[t] = std::rand() % w + j * w;
+      col[t++] = i;      
+    }
+      
+  CMatrix_CSC res(val, row, col, mu * n, w * mu, n, true);
+  delete[] val;
+  delete[] row;
+  delete[] col;
+  return res;
+}
 
 
+
+
+
+// Do same thing as FastThreshMult, but replace the core with count sketch
+CMatrix_CSC FastThreshMult_Count(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
+			   int w, double theta, double rho) {
+
+
+  CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
+  CTimer timer;
+  int t = 0; // # of levels in dyadic structure
+  Ps[0] = new CMatrix_CSC(P);
+
+  while (Ps[t]->m > 1) {
+    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
+    ++t;
+  }
+  ++t;
+
+
+
+  // calc L1 norm of P * Q
+  //  CVector&& R1 = calcL1Norm(P, Q);
+
+
+  // for debug purpose
+  int debug_ct_naive = 0;
+  int debug_ct_algor = 0;
+
+  
+  ///////////////////////////////////////////
+  // recover heavy entries
+  ///////////////////////////////////////////
+  CVector val, row, col;
+  int skCol[w * mu]; // keep extracted column vector
+
+  std::vector<int> use_exact;
+  std::vector<int> use_sketch;
+  for (int i = 0; i < Q.n; ++i) // for column
+    if (false) { //R1[i] > (0.6 + rho) * w * theta) { // use exact algorithm
+      debug_ct_naive++;
+      use_exact.push_back(i);
+    }
+    else { // use sketch
+      debug_ct_algor++;
+      use_sketch.push_back(i);
+    }
+
+ 
+  //////////////////////////////////////////////////////
+  ///////////////// Using exact algo ///////////////////
+  //////////////////////////////////////////////////////
+  timer.start();
+  // slicing
+  CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  // for the exact calculation part, append entries > theta to result vector
+  int ptr = 0;
+  for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
+    for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
+      if (exact_part.val[i] > theta) {
+	val.push_back(exact_part.val[i]);
+	row.push_back(exact_part.row[i]);
+	col.push_back(*it);
+      }
+    ++ptr;
+  }
+  timer.stop("Use exact algo to recover heavy hitters");
+
+
+
+  /////////////////////////////////////////////////////
+  /////////////  Using sketch /////////////////////////
+  /////////////////////////////////////////////////////
+  
+
+  timer.start();
+  // create sketch 
+  CMatrix_CSC&& slice = Q[use_sketch];
+  CMatrix_CSC sk[MAX_LOGN];
+  CMatrix_CSC* CMs[MAX_LOGN];
+
+
+  timer.start();
+  for (int i = 0; i < t; ++i) {
+    // create count min sketch
+    CMs[i] = new CMatrix_CSC(createCountSketch(w, mu, Ps[i]->m));
+    sk[i] = (*CMs[i] * *Ps[i]) * slice;// * W;
+  }
+  timer.stop("Create sketches  ");
+
+
+  // dealing with use_sketch part
+  ptr = 0;
+  for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
+    CVector ind[MAX_LOGN]; // dyadic structure
+    ind[t - 1].push_back(0);
+    for (int j = t - 1; j >= 0; --j) {
+
+      // convert csc col to int[]
+      std::fill(skCol, skCol + w * mu, 0);
+      for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
+	skCol[sk[j].row[k]] += sk[j].val[k];
+    
+
+      // now do recover
+      for (auto it = ind[j].begin(); it != ind[j].end(); ++it) {
+	if (*it >= Ps[j]->m)
+	  break;
+	int v = recover_count(skCol, *CMs[j], *it);
+	if (v > 0) {
+	  if (j > 0) { // has not reached level 0  
+	    ind[j - 1].push_back((*it) * 2);
+	    ind[j - 1].push_back((*it) * 2 + 1);
+	  }
+	  else { // reach level 0, keep the result
+	    if (v < theta)
+	      continue;
+	    val.push_back(v);
+	    row.push_back(*it);
+	    col.push_back(*i);
+	  } 
+	} // if
+      } // for (auto
+    } // for (int j ..      
+    ptr++;
+  }
+  timer.stop("Use sketch to recover heavy coordinates ");
+
+
+  // release memory
+  while (--t >= 0) {
+    delete Ps[t];
+  }
+  
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
+}
 
 
 // ugly, put all thing together to get speedup
@@ -249,3 +426,99 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 }
 
 
+
+CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
+			   int w, double theta, double rho) {
+
+  // calc L1 norm of P * Q
+  CVector&& R1 = calcL1Norm(P, Q);
+
+  CTimer timer;
+  // for debug purpose
+  int debug_ct_naive = 0;
+  int debug_ct_algor = 0;
+
+  
+  ///////////////////////////////////////////
+  // recover heavy entries
+  ///////////////////////////////////////////
+  CVector val, row, col;
+  int skCol[w * mu]; // keep extracted column vector
+
+  std::vector<int> use_exact;
+  std::vector<int> use_sketch;
+  for (int i = 0; i < Q.n; ++i) // for column
+    if (R1[i] > (0.6 + rho) * w * theta) { // use exact algorithm
+      debug_ct_naive++;
+      use_exact.push_back(i);
+    }
+    else { // use sketch
+      debug_ct_algor++;
+      use_sketch.push_back(i);
+    }
+
+ 
+  //////////////////////////////////////////////////////
+  ///////////////// Using exact algo ///////////////////
+  //////////////////////////////////////////////////////
+  timer.start();
+  // slicing
+  CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  // for the exact calculation part, append entries > theta to result vector
+  int ptr = 0;
+  for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
+    for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
+      if (exact_part.val[i] > theta) {
+	val.push_back(exact_part.val[i]);
+	row.push_back(exact_part.row[i]);
+	col.push_back(*it);
+      }
+    ++ptr;
+  }
+  timer.stop("Use exact algo to recover heavy hitters");
+
+
+
+  /////////////////////////////////////////////////////
+  /////////////  Using sketch /////////////////////////
+  /////////////////////////////////////////////////////
+  
+
+  timer.start();
+  // create sketch 
+  CMatrix_CSC&& slice = Q[use_sketch];
+  CMatrix_CSC&& CM(createCountMin(w, mu, P.m)); 
+
+
+  timer.start();
+  CMatrix_CSC sk = (CM * P) * slice;
+  timer.stop("Create sketches  ");
+
+
+  // dealing with use_sketch part
+  ptr = 0;
+  for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
+    // convert csc col to int[]
+    std::fill(skCol, skCol + w * mu, 0);
+    for (int k = sk.col_ptr[ptr]; k < sk.col_ptr[ptr + 1]; ++k)
+      skCol[sk.row[k]] += sk.val[k];
+    
+
+    // now do recover
+    for (auto it = 0; it < P.m; ++it) {
+      int v = recover(skCol, CM, it);
+	if (v > theta) {
+	  val.push_back(v);
+	  row.push_back(it);
+	  col.push_back(*i);
+	} 
+    } // for (auto
+    ptr++;
+  } // for (int i
+    
+  timer.stop("Use sketch to recover heavy coordinates ");
+  
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
+}

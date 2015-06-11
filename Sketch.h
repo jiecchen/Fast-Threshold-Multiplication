@@ -17,6 +17,11 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc);
 
 CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 			   int w, double theta, double rho);
+CMatrix_CSC FastThreshMult_Count(const CMatrix_CSC &P, const CMatrix_CSC &Q,
+			   int w, double theta, double rho);
+
+CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
+			   int w, double theta, double rho);
 
 
 /* // P, Q are boolean matrices */
