@@ -27,6 +27,8 @@ Notes
 
 + why not splitting the vector R_i to blocks? Will have some speedup?
 
++ compare with the nips best paper?
+
 
 ## What I learned from this work
 + implement the algorithm will help you to **think**.
