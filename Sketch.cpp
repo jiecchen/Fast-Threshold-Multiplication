@@ -13,8 +13,8 @@
 const int _INFINITY = 1 << 30;
 const int MAX_LOGN = 25;
 const int mu = 3;
-const double alpha = 0.9;
-int STEP_SIZE = 10; // how many neighbors to be merged
+const double alpha = 2.;
+int STEP_SIZE = 5000; // how many neighbors to be merged
 
 
 //Principle:
@@ -51,13 +51,15 @@ void slicing(int arr[], const CMatrix_CSC& csc, int i) {
 
 
 // given to vector, return their inner product
-int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b) {
+int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh) {
   int pa = 0;
   int pb = 0;
   int res = 0;
   while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
     if (a.row[pa] == b.row[pb]) {
       res += a.val[pa++] * b.val[pb++];
+      if (res > speedup_thresh)
+	return res;
     }
     else if (a.row[pa] < b.row[pb]) {
       ++pa;
@@ -364,7 +366,8 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 			   double theta, double rho, int w) {
 
   // set up the step_size to merge neighbor
-  int step_size = 2;
+  int step_size = STEP_SIZE;
+  double threshold = (alpha + rho) / 4. * w * theta;
 
   CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
   CTimer timer;
@@ -394,7 +397,7 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   ///////////////////////////////////////////
   CVector val, row, col;
   int skCol[w * mu]; // keep extracted column vector
-
+  CVector R1 = calcL1Norm(P, Q);
   
  
 
@@ -449,8 +452,8 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	  }
 	  else { // reach level 0, do verification 
 
-	    if (v > theta) {
-	      v = inner_product(P[*it], Qi);
+	    if (v > theta && R1[i] > threshold) {
+	      v = inner_product(Q[*it], Qi, theta);
 	    }
 	    if (v > theta) {
 	      val.push_back(v);
@@ -488,15 +491,13 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 				  double theta, double rho, int w) {
 
   // calc L1 norm of P * Q
-  CVector&& R1 = calcL1Norm(P, Q);
-
-  if (w < 1)
-    w = optimalBucketsSize(R1, Q, rho, theta);
+  CVector&& R1 = calcL1Norm(P, Q);  
+  double threshold = (alpha + rho)/ 4. * w * theta;
+  // if (w < 1)
+  //   w = optimalBucketsSize(R1, Q, rho, theta);
 
   CTimer timer;
-  // for debug purpose
-  int debug_ct_naive = 0;
-  int debug_ct_algor = 0;
+
 
   
   ///////////////////////////////////////////
@@ -504,43 +505,6 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   ///////////////////////////////////////////
   CVector val, row, col;
   int skCol[w * mu]; // keep extracted column vector
-
-  std::vector<int> use_exact;
-  std::vector<int> use_sketch;
-  for (int i = 0; i < Q.n; ++i) // for column
-    if (R1[i] > (alpha + rho) / 4. * w * theta) { // use exact algorithm
-      debug_ct_naive++;
-      use_exact.push_back(i);
-    }
-    else { // use sketch
-      debug_ct_algor++;
-      use_sketch.push_back(i);
-    }
-
-  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
-	    << " columns use Sketch." << std::endl;
-
-  
- 
-  //////////////////////////////////////////////////////
-  ///////////////// Using exact algo ///////////////////
-  //////////////////////////////////////////////////////
-  timer.start("Use exact algo");
-  // slicing
-  CMatrix_CSC&& exact_part = P * (Q[use_exact]);
-  // for the exact calculation part, append entries > theta to result vector
-  int ptr = 0;
-  for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
-    for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
-      if (exact_part.val[i] > theta) {
-	val.push_back(exact_part.val[i]);
-	row.push_back(exact_part.row[i]);
-	col.push_back(*it);
-      }
-    ++ptr;
-  }
-  timer.stop();
-
 
 
   /////////////////////////////////////////////////////
@@ -550,35 +514,35 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
   timer.start("Create sketches");
   // create sketch 
-  CMatrix_CSC&& slice = Q[use_sketch];
   timer.stop();
 
   timer.start("Skech the matrix");
   CMatrix_CSC CM(createCountMin(w, mu, P.m)); 
-  CMatrix_CSC sk((CM * P) * slice);
+  CMatrix_CSC sk((CM * P) * Q);
   timer.stop();
 
 
   timer.start("Use sketch to recover");
   // dealing with use_sketch part
-  ptr = 0;
-  for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
-    // convert csc col to int[]
-    std::fill(skCol, skCol + w * mu, 0);
-    for (int k = sk.col_ptr[ptr]; k < sk.col_ptr[ptr + 1]; ++k)
-      skCol[sk.row[k]] += sk.val[k];
-    
 
+  for (int i = 0; i < Q.n; ++i) {
+
+    // convert csc col to int[]
+    slicing(skCol, sk, i);
+
+    
     // now do recover
-    for (auto it = 0; it < P.m; ++it) {
-      int v = recover(skCol, CM, it);
-	if (v > theta) {
-	  val.push_back(v);
-	  row.push_back(it);
-	  col.push_back(*i);
-	} 
+    for (int r = 0; r < P.m; ++r) {
+      int v = recover(skCol, CM, r);
+      if (v > theta && R1[i] > threshold) {
+	v = inner_product(Q[r], Q[i], theta);
+      }
+      if (v > theta) {
+	val.push_back(v);
+	row.push_back(r);
+	col.push_back(i);
+      } 
     } // for (auto
-    ptr++;
   } // for (int i
     
   timer.stop();

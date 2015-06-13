@@ -26,7 +26,7 @@ int recover(int sk[], const CMatrix_CSC &cm, int rw);
 void slicing(int arr[], const CMatrix_CSC& csc, int i);
 
 // given to vector, return their inner product
-int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b);
+int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh=1e+20);
 
 #endif
 
