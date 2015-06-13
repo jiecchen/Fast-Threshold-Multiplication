@@ -10,11 +10,11 @@
 #include "utils.h"
 
 
-const int _INFINITY = std::numeric_limits<int>::infinity();
+const int _INFINITY = 1 << 30;
 const int MAX_LOGN = 25;
 const int mu = 3;
-const double alpha = 1.;
-int STEP_SIZE = 500; // how many neighbors to be merged
+const double alpha = 0.9;
+int STEP_SIZE = 10; // how many neighbors to be merged
 
 
 //Principle:
@@ -38,9 +38,41 @@ int recover(int sk[], const CMatrix_CSC &cm, int rw) {
 }
 
 
+
+// convert csc[i] to int[], keep in arr[]
+void slicing(int arr[], const CMatrix_CSC& csc, int i) {
+  // convert csc col to int[]
+  std::fill(arr, arr + csc.m, 0);
+  for (int k = csc.col_ptr[i]; k < csc.col_ptr[i + 1]; ++k)
+    arr[csc.row[k]] = csc.val[k];
+}
+
+
+
+
+// given to vector, return their inner product
+int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b) {
+  int pa = 0;
+  int pb = 0;
+  int res = 0;
+  while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
+    if (a.row[pa] == b.row[pb]) {
+      res += a.val[pa++] * b.val[pb++];
+    }
+    else if (a.row[pa] < b.row[pb]) {
+      ++pa;
+    }
+    else
+      ++pb;
+  }
+  return res;
+}
+
+
+
 // let oldCsc = [R_0; R_1; R_2; R_3; ...]
 // newCsc = [R_0 + R_1; R_2 + R_3; ...]
-CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
+CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc, int step_size=STEP_SIZE) {
   if (oldCsc.nnz <= 0)
     return CMatrix_CSC();
   CVector val, row, col;
@@ -49,16 +81,16 @@ CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc) {
     for (int j = oldCsc.col_ptr[i]; j < oldCsc.col_ptr[i + 1]; ++j) {
       if (j == oldCsc.col_ptr[i]) {
 	val.push_back(oldCsc.val[j]);
-	row.push_back(oldCsc.row[j] / STEP_SIZE);
+	row.push_back(oldCsc.row[j] / step_size);
 	col.push_back(i);
 	continue;
       }
       
-      if ((oldCsc.row[j] / STEP_SIZE) == row.back()) 
+      if ((oldCsc.row[j] / step_size) == row.back()) 
 	val.back() += oldCsc.val[j];
       else {
 	val.push_back(oldCsc.val[j]);
-	row.push_back(oldCsc.row[j] / STEP_SIZE);
+	row.push_back(oldCsc.row[j] / step_size);
 	col.push_back(i);
       }
     }// for j    
@@ -144,7 +176,7 @@ int optimalBucketsSize(const CVector& R1, const CMatrix_CSC& Q, double rho, doub
 
 
 
-  double min_cost = std::numeric_limits<double>::infinity();
+  double min_cost = 1e+15;
   double w = 0;
 
   for (unsigned int t = 0; t < R_1.size(); ++t) {
@@ -174,7 +206,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 			   double theta, double rho, int w) {
 
   // set up the step_size to merge neighbor
-  STEP_SIZE = (int) std::min(std::sqrt(P.n) * 20 + 1, P.n / 2.);
+  int step_size = (int) std::min(std::sqrt(P.n) * 20 + 1, P.n / 2.);
 
   CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
   CTimer timer;
@@ -185,7 +217,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
   while (Ps[t]->m > 1) {
-    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
+    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t], step_size));
     ++t;
   }
   ++t;
@@ -279,9 +311,10 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
     for (int j = t - 1; j >= 0; --j) {
 
       // convert csc col to int[]
-      std::fill(skCol, skCol + w * mu, 0);
-      for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
-	skCol[sk[j].row[k]] += sk[j].val[k];
+      slicing(skCol, sk[j], ptr);
+      // std::fill(skCol, skCol + w * mu, 0);
+      // for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
+      // 	skCol[sk[j].row[k]] += sk[j].val[k];
     
 
       // now do recover
@@ -291,8 +324,8 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	int v = recover(skCol, *CMs[j], *it);
 	if (v > theta) {
 	  if (j > 0) { // has not reached level 0  
-	    for (int j0 = 0; j0 < STEP_SIZE; ++j0)
-	      ind[j - 1].push_back((*it) * STEP_SIZE + j0);
+	    for (int j0 = 0; j0 < step_size; ++j0)
+	      ind[j - 1].push_back((*it) * step_size + j0);
 	    //ind[j - 1].push_back((*it) * 2);
 	    //ind[j - 1].push_back((*it) * 2 + 1);
 	  }
@@ -323,23 +356,6 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
 
-// given to vector, return their inner product
-int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b) {
-  int pa = 0;
-  int pb = 0;
-  int res = 0;
-  while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
-    if (a.row[pa] == b.row[pb]) {
-      res += a.val[pa++] * a.val[pb++];
-    }
-    else if (a.row[pa] < b.row[pb]) {
-      ++pa;
-    }
-    else
-      ++pb;
-  }
-  return res;
-}
 
 
 
@@ -348,7 +364,7 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 			   double theta, double rho, int w) {
 
   // set up the step_size to merge neighbor
-  STEP_SIZE = (int) std::min(std::sqrt(P.n) * 20 + 1, P.n / 2.);
+  int step_size = 2;
 
   CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
   CTimer timer;
@@ -358,20 +374,19 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
 
+
   while (Ps[t]->m > 1) {
-    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
+    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t], step_size));
     ++t;
   }
   ++t;
 
 
 
-  // calc L1 norm of P * Q
-  CVector&& R1 = calcL1Norm(P, Q);
-  
-  // for debug purpose
-  int debug_ct_naive = 0;
-  int debug_ct_algor = 0;
+  // // calc L1 norm of P * Q
+  // CVector&& R1 = calcL1Norm(P, Q);
+  //  double threshold = (alpha + rho) / 4. * w * theta;  
+
 
   
   ///////////////////////////////////////////
@@ -380,16 +395,6 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   CVector val, row, col;
   int skCol[w * mu]; // keep extracted column vector
 
-  for (int i = 0; i < Q.n; ++i) // for column
-    if (R1[i] > (alpha + rho) / 4. * w * theta) { // use exact algorithm
-      debug_ct_naive++;
-    }
-    else { // use sketch
-      debug_ct_algor++;
-    }
-
-  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
-	    << " columns use Sketch." << std::endl;
   
  
 
@@ -418,39 +423,45 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
   timer.start("Do recovering");
   // dealing with use_sketch part
-  int ptr = 0;
+
   for (int i = 0; i < Q.n; ++i) {
+    
+    CMatrix_CSC && Qi = Q[i];
+
     CVector ind[MAX_LOGN]; // dyadic structure
     ind[t - 1].push_back(0);
     for (int j = t - 1; j >= 0; --j) {
 
       // convert csc col to int[]
-      std::fill(skCol, skCol + w * mu, 0);
-      for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
-	skCol[sk[j].row[k]] += sk[j].val[k];
-    
+      slicing(skCol, sk[j], i);
+
 
       // now do recover
       for (auto it = ind[j].begin(); it != ind[j].end(); ++it) {
 	if (*it >= Ps[j]->m)
 	  break;
 	int v = recover(skCol, *CMs[j], *it);
+
 	if (v > theta) {
 	  if (j > 0) { // has not reached level 0  
-	    for (int j0 = 0; j0 < STEP_SIZE; ++j0)
-	      ind[j - 1].push_back((*it) * STEP_SIZE + j0);
-	    //ind[j - 1].push_back((*it) * 2);
-	    //ind[j - 1].push_back((*it) * 2 + 1);
+	    for (int j0 = 0; j0 < step_size; ++j0)
+	      ind[j - 1].push_back((*it) * step_size + j0);
 	  }
-	  else { // reach level 0, keep the result
-	    val.push_back(v);
-	    row.push_back(*it);
-	    col.push_back(i);
+	  else { // reach level 0, do verification 
+
+	    if (v > theta) {
+	      v = inner_product(P[*it], Qi);
+	    }
+	    if (v > theta) {
+	      val.push_back(v);
+	      row.push_back(*it);
+	      col.push_back(i);
+	    }
 	  } 
 	} // if
       } // for (auto
     } // for (int j ..      
-    ptr++;
+
   }
   timer.stop();
 
@@ -458,6 +469,7 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   // release memory
   while (--t >= 0) {
     delete Ps[t];
+    delete CMs[t];
   }
 
   timer.stop();
