@@ -43,34 +43,36 @@ int main(int argc, char **argv) {
   CMatrix_COO cooT(coo.T());
   CMatrix_CSC Q(cooT, false);
   timer.stop();
-  std::cout << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
+  std::cerr << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
   
-  double theta= 100;
-  double rho = 0.1;
+  double theta= 40;
+  double rho = 1.1;
 
-
-
-  std::cerr << std::endl;
-  timer.start("Naive P * Q ");
-  CMatrix_COO&& res = toCoo(P * Q);
-  res.print(theta);
-  timer.stop();
-
-
-  
-  
-  std::cerr << std::endl;
-  timer.start("Use FastThreshMult");
-  CMatrix_COO &&new_res = toCoo(FastThreshMult(P, Q, theta, rho));
-  timer.stop();
-  new_res.print();
+  int w = 300;
 
 
   // std::cerr << std::endl;
-  // timer.start("Use FastThreshMult_Simple");
-  // new_res = toCoo(FastThreshMult_Simple(P, Q, theta, rho));
+  // timer.start("Naive P * Q ");
+  // CMatrix_COO&& res = toCoo(P * Q);
   // timer.stop();
+  // res.print(theta);
 
+
+  
+  
+  // std::cerr << std::endl;
+  // timer.start("Use FastThreshMult_Simple");
+  // CMatrix_COO &&new_res = toCoo(FastThreshMult_Simple(P, Q, theta, rho, w));
+  // timer.stop();
+  // new_res.print();
+
+ 
+
+  std::cerr << std::endl;
+  timer.start("Use FastThreshMult_filter");
+  CMatrix_COO &&new_res1 = toCoo(FastThreshMult_filter(P, Q, theta, rho, w));
+  timer.stop();
+  new_res1.print();
  
   return 0;
 }
