@@ -322,6 +322,156 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
 
+
+// given to vector, return their inner product
+int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b) {
+  int pa = 0;
+  int pb = 0;
+  int res = 0;
+  while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
+    if (a.row[pa] == b.row[pb]) {
+      res += a.val[pa++] * a.val[pb++];
+    }
+    else if (a.row[pa] < b.row[pb]) {
+      ++pa;
+    }
+    else
+      ++pb;
+  }
+  return res;
+}
+
+
+
+
+CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
+			   double theta, double rho, int w) {
+
+  // set up the step_size to merge neighbor
+  STEP_SIZE = (int) std::min(std::sqrt(P.n) * 20 + 1, P.n / 2.);
+
+  CMatrix_CSC* Ps[MAX_LOGN]; // keep merged matrices
+  CTimer timer;
+  int t = 0; // # of levels in dyadic structure
+  Ps[0] = new CMatrix_CSC(P);
+
+
+
+
+  while (Ps[t]->m > 1) {
+    Ps[t + 1] = new CMatrix_CSC(mergeNeighbor(*Ps[t]));
+    ++t;
+  }
+  ++t;
+
+
+
+  // calc L1 norm of P * Q
+  CVector&& R1 = calcL1Norm(P, Q);
+  
+  // for debug purpose
+  int debug_ct_naive = 0;
+  int debug_ct_algor = 0;
+
+  
+  ///////////////////////////////////////////
+  // recover heavy entries
+  ///////////////////////////////////////////
+  CVector val, row, col;
+  int skCol[w * mu]; // keep extracted column vector
+
+  for (int i = 0; i < Q.n; ++i) // for column
+    if (R1[i] > (alpha + rho) / 4. * w * theta) { // use exact algorithm
+      debug_ct_naive++;
+    }
+    else { // use sketch
+      debug_ct_algor++;
+    }
+
+  std::cerr << debug_ct_naive << " columns use Naive, " << debug_ct_algor 
+	    << " columns use Sketch." << std::endl;
+  
+ 
+
+  
+
+
+  /////////////////////////////////////////////////////
+  /////////////  Using sketch /////////////////////////
+  /////////////////////////////////////////////////////
+  
+
+  timer.start("Use sketch");
+  // create sketch 
+  CMatrix_CSC sk[MAX_LOGN];
+  CMatrix_CSC* CMs[MAX_LOGN];
+
+
+  timer.start("sketch matrix");
+  for (int i = 0; i < t; ++i) {
+    // create count min sketch
+    CMs[i] = new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m));
+    sk[i] = (*CMs[i] * *Ps[i]) * Q;
+  }
+  timer.stop();
+
+
+  timer.start("Do recovering");
+  // dealing with use_sketch part
+  int ptr = 0;
+  for (int i = 0; i < Q.n; ++i) {
+    CVector ind[MAX_LOGN]; // dyadic structure
+    ind[t - 1].push_back(0);
+    for (int j = t - 1; j >= 0; --j) {
+
+      // convert csc col to int[]
+      std::fill(skCol, skCol + w * mu, 0);
+      for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
+	skCol[sk[j].row[k]] += sk[j].val[k];
+    
+
+      // now do recover
+      for (auto it = ind[j].begin(); it != ind[j].end(); ++it) {
+	if (*it >= Ps[j]->m)
+	  break;
+	int v = recover(skCol, *CMs[j], *it);
+	if (v > theta) {
+	  if (j > 0) { // has not reached level 0  
+	    for (int j0 = 0; j0 < STEP_SIZE; ++j0)
+	      ind[j - 1].push_back((*it) * STEP_SIZE + j0);
+	    //ind[j - 1].push_back((*it) * 2);
+	    //ind[j - 1].push_back((*it) * 2 + 1);
+	  }
+	  else { // reach level 0, keep the result
+	    val.push_back(v);
+	    row.push_back(*it);
+	    col.push_back(i);
+	  } 
+	} // if
+      } // for (auto
+    } // for (int j ..      
+    ptr++;
+  }
+  timer.stop();
+
+
+  // release memory
+  while (--t >= 0) {
+    delete Ps[t];
+  }
+
+  timer.stop();
+  
+  return CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
+}
+
+
+
+
+
+
+
+
 CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
 				  double theta, double rho, int w) {
 
