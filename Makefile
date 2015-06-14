@@ -14,8 +14,11 @@ RM = rm -f
 
 test: test.o Algebra.o Sketch.o
 	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o
-test_dblp: test_dblp.o Algebra.o Sketch.o
-	$(CC) $(CFLAGS) -o test_dblp test_dblp.o Algebra.o Sketch.o	
+test_dblp: test_dblp.o Algebra.o Sketch.o sjoin.o
+	$(CC) $(CFLAGS) -o test_dblp test_dblp.o Algebra.o Sketch.o sjoin.o
+
+sjoin.o: sjoin.h Algebra.h sjoin.cpp 
+	$(CC) $(CFLAGS)  -c sjoin.cpp *.h
 
 test_dblp.o: test_dblp.cpp Algebra.h Sketch.h utils.h
 	$(CC) $(CFLAGS)  -c test_dblp.cpp *.h
