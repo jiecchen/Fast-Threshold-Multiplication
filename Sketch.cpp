@@ -12,8 +12,8 @@
 
 const int _INFINITY = 1 << 30;
 const int MAX_LOGN = 25;
-const int mu = 2;
-const double alpha = 1;
+const int mu = 3;
+const double alpha = 0.5;
 int STEP_SIZE = 50; // how many neighbors to be merged
 
 
@@ -50,25 +50,6 @@ void slicing(int arr[], const CMatrix_CSC& csc, int i) {
 
 
 
-// given to vector, return their inner product
-int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh) {
-  int pa = 0;
-  int pb = 0;
-  int res = 0;
-  while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
-    if (a.row[pa] == b.row[pb]) {
-      res += a.val[pa++] * b.val[pb++];
-      if (res > speedup_thresh)
-	return res;
-    }
-    else if (a.row[pa] < b.row[pb]) {
-      ++pa;
-    }
-    else
-      ++pb;
-  }
-  return res;
-}
 
 
 
