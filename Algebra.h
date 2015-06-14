@@ -76,12 +76,12 @@ public:
   void print(double theta = 0) const {
     int ct = 0;
     for (const Element &e: data)
-      if (e.val > theta)
+      if (e.val >= theta)
 	ct++;
     std::cerr << "Output size = " << ct << std::endl;
 
     for (const Element &e: data)
-      if (e.val > theta)
+      if (e.val >= theta)
 	std::cout << e.row << " " << e.col << " " << e.val << std::endl;
   }
   void set_mn(int _m, int _n) {
@@ -214,6 +214,10 @@ public:
   };
 
 
+  // Transpose
+  CMatrix_CSC T() const;
+
+  
   CMatrix_CSC operator[](std::vector<int> indices) const {// return i_th column
     CVector _val, _row, _col;
     int ptr = 0;
@@ -270,6 +274,9 @@ CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B);
 // convert CSC to COO format
 CMatrix_COO toCoo(const CMatrix_CSC &mat);
 
+
+// given to vector, return their inner product
+int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh=1e+20);
 
 
 /* // multiplication for coo format */

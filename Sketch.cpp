@@ -426,7 +426,7 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	  break;
 	int v = recover(skCol, *CMs[j], *it);
 
-	if (v > theta) {
+	if (v >= theta) {
 	  if (j > 0) { // has not reached level 0  
 	    for (int j0 = 0; j0 < step_size; ++j0)
 	      ind[j - 1].push_back((*it) * step_size + j0);
@@ -436,7 +436,7 @@ CMatrix_CSC FastThreshMult_filter(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	    if (v > theta && R1[i] > threshold) {
 	      v = inner_product(Q[*it], Qi, theta);
 	    }
-	    if (v > theta) {
+	    if (v >= theta) {
 	      val.push_back(v);
 	      row.push_back(*it);
 	      col.push_back(i);

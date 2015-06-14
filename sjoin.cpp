@@ -16,16 +16,13 @@ void buildInvertedIndex(InvertedIndex& inIdx, const CMatrix_CSC& P, const CMatri
 } 
 
 
-bool verified(const CMatrix_CSC &Q, int i, int j, int theta) {
-  return inner_product(Q[i], Q[j]) >= theta;
-
-}
 
 
 // n-prefix - n-prefix scheme
 // theta - similarity threshold
 CMatrix_COO prefix_sjoin(const CMatrix_CSC& P, const CMatrix_CSC& Q, int n_prefix, int theta) {
   CMatrix_COO res(P.m, Q.n); // to keep the result
+  CMatrix_CSC&& PT = P.T();
 
   for (int i = 0; i < Q.n; ++i) {
 
@@ -48,8 +45,9 @@ CMatrix_COO prefix_sjoin(const CMatrix_CSC& P, const CMatrix_CSC& Q, int n_prefi
     for (auto it = counter.begin(); it != counter.end(); ++it)
       if (it->second >= n_prefix) { // it's a legal candidates
 	//TODO, now I assume P = Q^T, try to generalizd it
-	if (verified(Q, it->first, i, theta + 1)) {
-	  res.push_back(Element(it->first, i, theta + 1));
+	int v = inner_product(PT[it->first], PT[i]);
+	if (v >= theta) {
+	  res.push_back(Element(it->first, i, v));
 	}
       }
   }

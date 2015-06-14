@@ -116,6 +116,14 @@ void CMatrix_COO::sortByColumnRow() {
 }
 
 
+  // Transpose
+CMatrix_CSC CMatrix_CSC::T() const {
+  CMatrix_COO&& coo = toCoo(*this);
+  CMatrix_COO&& cooT = coo.T();
+  return CMatrix_CSC(cooT);
+}
+
+
 
 
 std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
@@ -142,64 +150,6 @@ std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
 
 
 
-// // product of two coo matrix, return a int*
-// int* coo_mult(CMatrix_COO &A, CMatrix_COO &B) {
-//   int *data = new int[A.get_m() * B.get_n()]();
-//   int v[A.get_n()];
-//   A.sortByRowColumn();
-//   //  B.sortByColumnRow();
-//   int t = 0;
-//   int row = A[t].row;
-//   while (t < A.size()) {
-//     // construct the row of A
-//     std::fill(v, v + A.get_n(), 0);
-//     v[A[t].col] = A[t].val;
-//     ++t;
-//     while (t < A.size() && A[t-1].row == A[t].row) {
-//       v[A[t].col] = A[t].val;
-//       ++t;
-//     }
-//     CVector cv = CVector(v, v + A.get_n());
-//     //    std::cout << "row = " << row << " v = " << cv  << std::endl;
-
-//     // calculate v' * B
-//     for (int i = 0; i < B.size(); i++)
-//       data[row * B.get_n() + B[i].col] += B[i].val * v[B[i].row];
-    
-
-//     if (t < A.size())
-//       row = A[t].row;
-        
-//   }
-//   return data;
-// }
-
-
-
-// // r = P * vec
-// // result = r[r > thresh]
-// // note:  P has to be sorted by RowColumn
-// void thresholdMult(SparseVector &result, CMatrix_COO &P, SparseVector &vec, double thresh) {
-//   int v[P.get_n()];
-//   std::fill(v, v + P.get_n(), 0);
-//   for (const VectorElement &it : vec)
-//     v[it.ind] = it.val;
-//   int t = 0; 
-//   while (t < P.size()) {
-//     int current_row = P[t].row;
-//     int prod = 0;
-//     prod += P[t].val * v[P[t].col];
-//     ++t;
-
-//     while (t < P.size() && P[t].row == P[t-1].row) {
-//       prod += P[t].val * v[P[t].col];
-//       ++t;
-//     }
-
-//     if (prod > thresh) 
-//       result.push_back(VectorElement(current_row, prod));    
-//   }
-// }
 
 
 
@@ -247,6 +197,26 @@ bool operator ==(const Element &lh, const Element &rh) {
 
 
 
+
+// given to vector, return their inner product
+int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh) {
+  int pa = 0;
+  int pb = 0;
+  int res = 0;
+  while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
+    if (a.row[pa] == b.row[pb]) {
+      res += a.val[pa++] * b.val[pb++];
+      if (res >= speedup_thresh)
+	return res;
+    }
+    else if (a.row[pa] < b.row[pb]) {
+      ++pa;
+    }
+    else
+      ++pb;
+  }
+  return res;
+}
 
 
 
