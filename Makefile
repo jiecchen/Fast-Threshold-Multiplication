@@ -12,8 +12,8 @@ TARGET = test createData test_dblp
 #LIBS = -larmadillo
 RM = rm -f
 
-test: test.o Algebra.o Sketch.o
-	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o
+test: test.o Algebra.o Sketch.o sjoin.o
+	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o sjoin.o
 test_dblp: test_dblp.o Algebra.o Sketch.o sjoin.o
 	$(CC) $(CFLAGS) -o test_dblp test_dblp.o Algebra.o Sketch.o sjoin.o
 
@@ -36,7 +36,7 @@ Algebra.o: Algebra.h Algebra.cpp
 	$(CC) $(CFLAGS)  -c Algebra.cpp Algebra.h
 
 
-Sketch.o: Sketch.h Algebra.h utils.h Sketch.cpp
+Sketch.o: Sketch.h Algebra.h utils.h sjoin.h Sketch.cpp
 	$(CC) $(CFLAGS) -c *.h Sketch.cpp
 
 clean:

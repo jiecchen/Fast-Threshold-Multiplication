@@ -11,7 +11,8 @@
 
 void test_utils_functions() {
   int M = 5;
-  int N = 1000;
+  int N = 10;
+  std::vector<int> idx{1, 2, 4};
   CMatrix_COO coo(M, N);
   std::srand(time(NULL));
   for (int i = 0; i < M; ++i)
@@ -20,9 +21,9 @@ void test_utils_functions() {
 	coo.push_back(Element(i, j, 1));
 
   CMatrix_CSC P(coo); 
-  CMatrix_COO cooT = coo.T();
-  CMatrix_CSC Q(cooT);
-  //  std::cerr << "P = \n" << coo << std::endl;
+  CMatrix_CSC&& Q = P.T();
+  std::cerr << "P = \n" << coo << std::endl;
+  std::cerr << "P = \n" << toCoo(P[idx]) << std::endl;
   //  std::cerr << "Q = \n" << cooT << std::endl;
   std::cerr << "P * Q =\n" << toCoo(P * Q) << std::endl;
   CMatrix_COO coo_new(M, M);

@@ -23,7 +23,7 @@ void buildInvertedIndex(InvertedIndex& inIdx, const CMatrix_CSC& P, const CMatri
 CMatrix_COO prefix_sjoin(const CMatrix_CSC& P, const CMatrix_CSC& Q, int n_prefix, int theta) {
   CMatrix_COO res(P.m, Q.n); // to keep the result
   CMatrix_CSC&& PT = P.T();
-
+  //  std::cerr << "Q: " << Q.m << "x" << Q.n << std::endl;
   for (int i = 0; i < Q.n; ++i) {
 
     // setup n_token, first n_tokens will be used to build Inverted index
@@ -45,7 +45,7 @@ CMatrix_COO prefix_sjoin(const CMatrix_CSC& P, const CMatrix_CSC& Q, int n_prefi
     for (auto it = counter.begin(); it != counter.end(); ++it)
       if (it->second >= n_prefix) { // it's a legal candidates
 	//TODO, now I assume P = Q^T, try to generalizd it
-	int v = inner_product(PT[it->first], PT[i]);
+	int v = inner_product(PT[it->first], Q[i]);
 	if (v >= theta) {
 	  res.push_back(Element(it->first, i, v));
 	}

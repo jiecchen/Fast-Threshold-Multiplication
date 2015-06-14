@@ -218,18 +218,18 @@ public:
   CMatrix_CSC T() const;
 
   
-  CMatrix_CSC operator[](std::vector<int> indices) const {// return i_th column
+  CMatrix_CSC operator[](const std::vector<int>& idx) const {// return i_th column
     CVector _val, _row, _col;
     int ptr = 0;
-    for (auto i = indices.begin(); i != indices.end(); ++i) {
-      for (int t = col_ptr[*i]; t < col_ptr[*i + 1]; ++t) {
+    for (unsigned int i = 0; i < idx.size(); ++i) {
+      for (int t = col_ptr[idx[i]]; t < col_ptr[idx[i] + 1]; ++t) {
 	_val.push_back(val[t]);
 	_row.push_back(row[t]);
 	_col.push_back(ptr);
       }
       ptr++;
     }
-    return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, indices.size());    
+    return CMatrix_CSC(_val.begin(), _row.begin(), _col.begin(), _val.size(), m, idx.size());    
   }
 
 

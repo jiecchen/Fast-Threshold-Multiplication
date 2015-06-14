@@ -46,10 +46,10 @@ int main(int argc, char **argv) {
   timer.stop();
   std::cerr << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
   
-  double theta= 100;
-  double rho = 3.1;
+  double theta= 200;
+  double rho = 1;
 
-  int w = 300;
+  int w = 20;
 
 
 
@@ -63,11 +63,11 @@ int main(int argc, char **argv) {
 
 
 
-  std::cerr << std::endl;
-  timer.start("Naive P * Q ");
-  CMatrix_COO&& res = toCoo(P * Q);
-  timer.stop();
-  res.print(theta);
+  // std::cerr << std::endl;
+  // timer.start("Naive P * Q ");
+  // CMatrix_COO&& res = toCoo(P * Q);
+  // timer.stop();
+  // res.print(theta);
 
 
 
@@ -79,11 +79,11 @@ int main(int argc, char **argv) {
 
  
 
-  // std::cerr << std::endl;
-  // timer.start("Use FastThreshMult");
-  // CMatrix_COO &&new_res1 = toCoo(FastThreshMult(P, Q, theta, rho, w));
-  // timer.stop();
-  // new_res1.print();
+  std::cerr << std::endl;
+  timer.start("Use FastThreshMult");
+  CMatrix_COO &&new_res1 = toCoo(FastThreshMult(P, Q, theta, rho, w));
+  timer.stop();
+  new_res1.print();
  
   return 0;
 }

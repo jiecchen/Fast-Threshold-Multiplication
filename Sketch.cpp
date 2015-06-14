@@ -8,13 +8,13 @@
 #include <ctime>
 #include <map>
 #include "utils.h"
-
+#include "sjoin.h"
 
 const int _INFINITY = 1 << 30;
 const int MAX_LOGN = 25;
-const int mu = 3;
+const int mu = 5;
 const double alpha = 0.5;
-int STEP_SIZE = 50; // how many neighbors to be merged
+int STEP_SIZE = 2; // how many neighbors to be merged
 
 
 //Principle:
@@ -239,27 +239,46 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	    << " columns use Sketch." << std::endl;
   
  
-  //////////////////////////////////////////////////////
-  ///////////////// Using exact algo ///////////////////
-  //////////////////////////////////////////////////////
-  timer.start("Use exact algo");
-  // slicing
-  timer.start("exact matrix multilication");
-  CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  // //////////////////////////////////////////////////////
+  // ///////////////// Using exact algo ///////////////////
+  // //////////////////////////////////////////////////////
+  // timer.start("Use exact algo");
+  // // slicing
+  // timer.start("exact matrix multilication");
+  // CMatrix_CSC&& exact_part = P * (Q[use_exact]);
+  // timer.stop();
+  // // for the exact calculation part, append entries > theta to result vector
+  // timer.start("pick up heavy hitters");
+  // int ptr = 0;
+  // for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
+  //   for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
+  //     if (exact_part.val[i] > theta) {
+  // 	val.push_back(exact_part.val[i]);
+  // 	row.push_back(exact_part.row[i]);
+  // 	col.push_back(*it);
+  //     }
+  //   ++ptr;
+  // }
+  // timer.stop();
+  // timer.stop();
+
+
+
+
+  /////////////////////////////////////////////////////
+  /////////////  Use Prefix-filter ////////////////////
+  /////////////////////////////////////////////////////
+  timer.start("Use prefix-filter");
+  int n_prefix = 20;
+  timer.start("Slice Q");
+  CMatrix_CSC&& slice_Q = Q[use_exact];
   timer.stop();
-  // for the exact calculation part, append entries > theta to result vector
-  timer.start("pick up heavy hitters");
-  int ptr = 0;
-  for (auto it = use_exact.begin(); it != use_exact.end(); ++it) {
-    for (int i = exact_part.col_ptr[ptr]; i < exact_part.col_ptr[ptr + 1]; ++i) 
-      if (exact_part.val[i] > theta) {
-	val.push_back(exact_part.val[i]);
-	row.push_back(exact_part.row[i]);
-	col.push_back(*it);
-      }
-    ++ptr;
+  CMatrix_COO &&coo = prefix_sjoin(P, slice_Q, n_prefix, theta);
+  for (int i = 0; i < coo.size(); ++i) {
+    val.push_back(coo[i].val);
+    row.push_back(coo[i].row);
+    col.push_back(use_exact[coo[i].col]);
   }
-  timer.stop();
   timer.stop();
 
 
@@ -274,7 +293,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   CMatrix_CSC&& slice = Q[use_sketch];
   CMatrix_CSC sk[MAX_LOGN];
   CMatrix_CSC* CMs[MAX_LOGN];
-
+  
 
   timer.start("sketch matrix");
   for (int i = 0; i < t; ++i) {
@@ -287,7 +306,7 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
   timer.start("Do recovering");
   // dealing with use_sketch part
-  ptr = 0;
+  int ptr = 0;
   for (auto i = use_sketch.begin(); i != use_sketch.end(); ++i) {
     CVector ind[MAX_LOGN]; // dyadic structure
     ind[t - 1].push_back(0);
@@ -295,9 +314,6 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
       // convert csc col to int[]
       slicing(skCol, sk[j], ptr);
-      // std::fill(skCol, skCol + w * mu, 0);
-      // for (int k = sk[j].col_ptr[ptr]; k < sk[j].col_ptr[ptr + 1]; ++k)
-      // 	skCol[sk[j].row[k]] += sk[j].val[k];
     
 
       // now do recover
@@ -305,12 +321,10 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 	if (*it >= Ps[j]->m)
 	  break;
 	int v = recover(skCol, *CMs[j], *it);
-	if (v > theta) {
+	if (v >= theta) {
 	  if (j > 0) { // has not reached level 0  
 	    for (int j0 = 0; j0 < step_size; ++j0)
 	      ind[j - 1].push_back((*it) * step_size + j0);
-	    //ind[j - 1].push_back((*it) * 2);
-	    //ind[j - 1].push_back((*it) * 2 + 1);
 	  }
 	  else { // reach level 0, keep the result
 	    val.push_back(v);
