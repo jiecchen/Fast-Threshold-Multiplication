@@ -25,10 +25,10 @@ CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
 // recover the entry rw
-int recover(int sk[], const CMatrix_CSC &cm, int rw);
+VAL_TYPE recover(VAL_TYPE sk[], const CMatrix_CSC &cm, int rw);
 
 // convert csc[i] to int[], keep in arr[]
-void slicing(int arr[], const CMatrix_CSC& csc, int i);
+void slicing(VAL_TYPE arr[], const CMatrix_CSC& csc, int i);
 
 
 #endif
