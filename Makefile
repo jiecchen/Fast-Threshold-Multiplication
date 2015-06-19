@@ -7,7 +7,7 @@ CC = g++
 CFLAGS  = -g -O3 -Wall -std=c++0x 
 
 # the build target executable:
-TARGET = test createData test_dblp
+TARGET = test createData test_dblp test_algebra
 
 #LIBS = -larmadillo
 RM = rm -f
@@ -16,6 +16,12 @@ test: test.o Algebra.o Sketch.o sjoin.o
 	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o sjoin.o
 test_dblp: test_dblp.o Algebra.o Sketch.o sjoin.o
 	$(CC) $(CFLAGS) -o test_dblp test_dblp.o Algebra.o Sketch.o sjoin.o
+
+test_algebra: test_algebra.o Algebra.o
+	$(CC) $(CFLAGS) -o test_algebra test_algebra.o Algebra.o
+
+test_algebra.o: test_algebra.cpp Algebra.h
+	$(CC) $(CFLAGS)  -c test_algebra.cpp Algebra.h
 
 sjoin.o: sjoin.h Algebra.h sjoin.cpp 
 	$(CC) $(CFLAGS)  -c sjoin.cpp *.h
