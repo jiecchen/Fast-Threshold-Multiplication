@@ -19,6 +19,11 @@ CMatrix_CSC FastThreshMult(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
 				  double theta, double rho, int w=0);
 
+// new version of FastThreshMult
+CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
+			       double theta, double rho, int w);
+
+
 // recover the entry rw
 int recover(int sk[], const CMatrix_CSC &cm, int rw);
 
