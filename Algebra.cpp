@@ -12,12 +12,12 @@
 ////////////////////////// CMatrix_CSC ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // has to be sorted by ColumnRow
-void CMatrix_CSC::init(int *_val, int *_row, int *_col, 
+void CMatrix_CSC::init(VAL_TYPE *_val, int *_row, int *_col, 
 			 int _nnz,  int _m,  int _n) {
   this->m = _m;
   this->n = _n;
   this->nnz = _nnz;
-  this->val = new int[_nnz];
+  this->val = new VAL_TYPE[_nnz];
   this->row = new int[_nnz];
   this->col_ptr = new int[_n + 1];
   std::copy(_val, _val + _nnz, val);
@@ -33,9 +33,9 @@ void CMatrix_CSC::init(int *_val, int *_row, int *_col,
       col_ptr[i] = col_ptr[i + 1];
 }
 
-CMatrix_CSC::CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, 
+CMatrix_CSC::CMatrix_CSC(CVector_iter _val, Index_iter _row, Index_iter _col, 
 			 int _nnz,  int _m,  int _n): m(_m), n(_n), nnz(_nnz) {
-  this->val = new int[_nnz];
+  this->val = new VAL_TYPE[_nnz];
   this->row = new int[_nnz];
   this->col_ptr = new int[_n + 1];
   std::copy(_val, _val + _nnz, val);
@@ -55,28 +55,16 @@ CMatrix_CSC::CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col
 
 
 
-
-// // v_s - v_e keeps the row numbers of non-zero entries
-// void thresh_mult(SparseVector &result, CMatrix_CSC &csc, int *v_s, int *v_e, double thresh) {
-//   std::map<int, int> res;
-//   while (v_s != v_e) {
-//     for (int i = csc.col_ptr[*v_s]; i < csc.col_ptr[(*v_s) + 1]; ++i) 
-//       res[csc.row[i]]++;
-//     ++v_s;
-//   }
-//   for (auto it = res.begin(); it != res.end(); ++it)
-//     if (it->second > thresh)
-//       result.push_back(VectorElement(it->first, it->second));
-// }
 
 
 
 //TODO:
 //  + bug: when A * B is zero matrix
 CMatrix_CSC operator *(const CMatrix_CSC &A, const CMatrix_CSC &B) {
-  CVector val, row, col;
+  CVector val;
+  std::vector<int> row, col;
   for (int i = 0; i < B.n; ++i) {
-    std::map<int, int> res;
+    std::map<int, VAL_TYPE> res;
     for (int j = B.col_ptr[i]; j < B.col_ptr[i + 1]; ++j) 
       for (int t = A.col_ptr[B.row[j]]; t < A.col_ptr[B.row[j] + 1]; ++t)
 	res[A.row[t]] += A.val[t] * B.val[j];
@@ -142,8 +130,6 @@ std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
     os << std::endl;
   }
 
-  // for (auto it = coo.data.begin(); it != coo.data.end(); ++it)
-  //   os << it->row << ", " << it->col << ", " << it->val << std::endl;
   return os;
 }
 
@@ -155,19 +141,6 @@ std::ostream& operator << (std::ostream & os, CMatrix_COO coo) {
 
 
 
-// // sum rows of an coo matrix
-// void sumRows_Coo(int *result, CMatrix_COO &P) {
-//   std::fill(result, result + P.get_n(), 0);
-//   for (int i = 0; i < P.size(); ++i)
-//     result[P[i].col] += P[i].val;
-// }
-
-// int inner_prod(int *v, SparseVector &sv) {
-//   int res = 0;
-//   for (auto it = sv.begin(); it != sv.end(); ++it)
-//     res += v[it->ind] * it->val;
-//   return res;
-// }
 
 
 
@@ -199,10 +172,10 @@ bool operator ==(const Element &lh, const Element &rh) {
 
 
 // given to vector, return their inner product
-int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh) {
+VAL_TYPE inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh) {
   int pa = 0;
   int pb = 0;
-  int res = 0;
+  VAL_TYPE res = 0;
   while (pa < a.col_ptr[1] && pb < b.col_ptr[1]) {
     if (a.row[pa] == b.row[pb]) {
       res += a.val[pa++] * b.val[pb++];

@@ -5,14 +5,16 @@
 #include <vector>
 #include <iostream>
 
+#define VAL_TYPE double
 
 
 ////////////////////////////////////////////////////////////////////////////////
 class Element {
 public:
   Element(): row(0), col(0), val(0) {};
-  Element(int row, int col, int val): row(row), col(col), val(val) {};
-  int row, col, val;
+  Element(int row, int col, VAL_TYPE val): row(row), col(col), val(val) {};
+  int row, col;
+  VAL_TYPE val;
 };
 
 bool operator < (const Element &lh, const Element &rh);
@@ -24,11 +26,12 @@ bool operator == (const Element &lh, const Element &rh);
 class VectorElement {
 public:
   VectorElement(): ind(0), val(0) {};
-  VectorElement(int ind, int val): ind(ind), val(val) {};
-  int ind, val;
+  VectorElement(int ind, VAL_TYPE val): ind(ind), val(val) {};
+  int ind; 
+  VAL_TYPE val;
 };
 
-typedef std::vector<int> CVector; // dense vector
+typedef std::vector<VAL_TYPE> CVector; // dense vector
 typedef CVector::iterator CVector_iter;
 typedef std::vector<int>::iterator Index_iter;
 typedef std::vector<VectorElement> SparseVector;
@@ -134,7 +137,7 @@ public:
 
   // copy constructor
  CMatrix_CSC(const CMatrix_CSC &A): m(A.m), n(A.n), nnz(A.nnz) {
-    val = new int[A.nnz];
+    val = new VAL_TYPE[A.nnz];
     std::copy(A.val, A.val + A.nnz, val);
     row = new int[A.nnz];
     std::copy(A.row, A.row + A.nnz, row);
@@ -142,8 +145,8 @@ public:
     std::copy(A.col_ptr, A.col_ptr + A.n + 1, col_ptr);
   };
 
-  CMatrix_CSC(CVector_iter _val, CVector_iter _row, CVector_iter _col, int _nnz, int _m,  int _n);
-  CMatrix_CSC(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n, bool sorted=false) {
+  CMatrix_CSC(CVector_iter _val, Index_iter _row, Index_iter _col, int _nnz, int _m,  int _n);
+  CMatrix_CSC(VAL_TYPE *_val, int *_row, int *_col, int _nnz, int _m,  int _n, bool sorted=false) {
     if (sorted) {
       this->init(_val, _row, _col, _nnz, _m, _n);
     }
@@ -164,7 +167,7 @@ public:
   void init(CMatrix_COO& coo, bool sorted=false) {
     if (!sorted)
       coo.sortByColumnRow();
-    int *_val = new int[coo.size()];
+    VAL_TYPE *_val = new VAL_TYPE[coo.size()];
     int *_col = new int[coo.size()];
     int *_row = new int[coo.size()];
     for (int i = 0; i < coo.size(); i++) {
@@ -204,7 +207,8 @@ public:
 
   // slicing
   CMatrix_CSC operator[](int i) const {// return i_th column
-    CVector _val, _row, _col;
+    CVector _val;
+    std::vector<int> _row, _col;
     for (int t = col_ptr[i]; t < col_ptr[i + 1]; ++t) {
       _val.push_back(val[t]);
       _row.push_back(row[t]);
@@ -219,7 +223,8 @@ public:
 
   
   CMatrix_CSC operator[](const std::vector<int>& idx) const {// return i_th column
-    CVector _val, _row, _col;
+    CVector _val; 
+    std::vector<int> _row, _col;
     int ptr = 0;
     for (unsigned int i = 0; i < idx.size(); ++i) {
       for (int t = col_ptr[idx[i]]; t < col_ptr[idx[i] + 1]; ++t) {
@@ -251,12 +256,12 @@ public:
 
   int m, n;
   int nnz;
-  int *val;
+  VAL_TYPE *val;
   int *row;
   int *col_ptr;
 
 private:
-  void init(int *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
+  void init(VAL_TYPE *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
 
 };
 
@@ -276,7 +281,7 @@ CMatrix_COO toCoo(const CMatrix_CSC &mat);
 
 
 // given to vector, return their inner product
-int inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh=1e+20);
+VAL_TYPE inner_product(const CMatrix_CSC& a, const CMatrix_CSC& b, double speedup_thresh=1e+20);
 
 
 /* // multiplication for coo format */
