@@ -46,10 +46,10 @@ int main(int argc, char **argv) {
   timer.stop();
   std::cerr << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
   
-  double theta= 200;
-  double rho = 1;
+  double theta= 50;
+  double rho = 10.1;
 
-  int w = 20;
+  int w = 15;
 
 
 
@@ -72,16 +72,16 @@ int main(int argc, char **argv) {
 
 
   // std::cerr << std::endl;
-  // timer.start("Use FastThreshMult_Simple");
-  // CMatrix_COO &&new_res = toCoo(FastThreshMult_Simple(P, Q, theta, rho, w));
+  // timer.start("Use FastThreshMult");
+  // CMatrix_COO &&new_res = toCoo(FastThreshMult(P, Q, theta, rho, w));
   // timer.stop();
   // new_res.print();
 
  
 
   std::cerr << std::endl;
-  timer.start("Use FastThreshMult");
-  CMatrix_COO &&new_res1 = toCoo(FastThreshMult(P, Q, theta, rho, w));
+  timer.start("Use FastThreshMult_new");
+  CMatrix_COO &&new_res1 = toCoo(FastThreshMult_new(P, Q, theta, rho, w));
   timer.stop();
   new_res1.print();
  
