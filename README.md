@@ -10,4 +10,4 @@ Experiment
 + http://www.mathworks.com/help/matlab/math/sparse-matrix-operations.html
 + http://codereview.stackexchange.com/questions/20124/sparse-matrix-multiplication
 + http://facta.junis.ni.ac.rs/mai/mai24/fumi-24_39_51.pdf
-
++ http://radimrehurek.com/gensim/tutorial.html
