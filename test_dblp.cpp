@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   while (fin >> row >> col) {
     M = std::max(M,row);
     N = std::max(N, col);
-    coo.push_back(Element(row, col, 1));
+    coo.push_back(Element(row, col, 1.));
     //    coo.push_back(Element(col, row, 1));
   }
   ++N;
@@ -46,34 +46,34 @@ int main(int argc, char **argv) {
   timer.stop();
   std::cerr << "Matrix: " << P.m << "x" << P.n << " nnz = " << P.nnz << std::endl;
   
-  double theta= 50;
-  double rho = 10.1;
+  double theta= 200;
+  double rho = 0.1;
 
-  int w = 15;
+  int w = 100;
+
+
+
+  // std::cerr << std::endl;
+  // int n_prefix = 20;
+  // // test sjoin
+  // timer.start("prefix-join");
+  // CMatrix_COO&& sjoin_res = prefix_sjoin(P, Q, n_prefix, theta);
+  // timer.stop();
+  // sjoin_res.print(theta);
 
 
 
   std::cerr << std::endl;
-  int n_prefix = 20;
-  // test sjoin
-  timer.start("prefix-join");
-  CMatrix_COO&& sjoin_res = prefix_sjoin(P, Q, n_prefix, theta);
+  timer.start("Naive P * Q ");
+  CMatrix_COO&& res = toCoo(P * Q);
   timer.stop();
-  sjoin_res.print(theta);
+  res.print(theta);
 
 
 
   // std::cerr << std::endl;
-  // timer.start("Naive P * Q ");
-  // CMatrix_COO&& res = toCoo(P * Q);
-  // timer.stop();
-  // res.print(theta);
-
-
-
-  // std::cerr << std::endl;
-  // timer.start("Use FastThreshMult");
-  // CMatrix_COO &&new_res = toCoo(FastThreshMult(P, Q, theta, rho, w));
+  // timer.start("Use FastThreshMult_Simple");
+  // CMatrix_COO &&new_res = toCoo(FastThreshMult_Simple(P, Q, theta, rho, w));
   // timer.stop();
   // new_res.print();
 
@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
   timer.start("Use FastThreshMult_new");
   CMatrix_COO &&new_res1 = toCoo(FastThreshMult_new(P, Q, theta, rho, w));
   timer.stop();
+
   new_res1.print();
  
   return 0;
