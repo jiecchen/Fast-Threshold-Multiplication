@@ -12,7 +12,8 @@
 ////////////////////////// CMatrix_CSC ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // has to be sorted by ColumnRow
-void CMatrix_CSC::init(VAL_TYPE *_val, int *_row, int *_col, 
+template <typename T1, typename T2>
+void CMatrix_CSC::init(T1 _val, T2 _row, T2 _col, 
 			 int _nnz,  int _m,  int _n) {
   this->m = _m;
   this->n = _n;
@@ -33,23 +34,24 @@ void CMatrix_CSC::init(VAL_TYPE *_val, int *_row, int *_col,
       col_ptr[i] = col_ptr[i + 1];
 }
 
-CMatrix_CSC::CMatrix_CSC(CVector_iter _val, Index_iter _row, Index_iter _col, 
-			 int _nnz,  int _m,  int _n): m(_m), n(_n), nnz(_nnz) {
-  this->val = new VAL_TYPE[_nnz];
-  this->row = new int[_nnz];
-  this->col_ptr = new int[_n + 1];
-  std::copy(_val, _val + _nnz, val);
-  std::copy(_row, _row + _nnz, row);
-  std::fill(col_ptr, col_ptr + _n + 1, _nnz);
+// CMatrix_CSC::CMatrix_CSC(CVector_iter _val, Index_iter _row, Index_iter _col, 
+// 			 int _nnz,  int _m,  int _n, bool sorted): m(_m), n(_n), nnz(_nnz) {
+  
+//   this->val = new VAL_TYPE[_nnz];
+//   this->row = new int[_nnz];
+//   this->col_ptr = new int[_n + 1];
+//   std::copy(_val, _val + _nnz, val);
+//   std::copy(_row, _row + _nnz, row);
+//   std::fill(col_ptr, col_ptr + _n + 1, _nnz);
 
-  for (int i = 0; i < _nnz; i++)
-    if (col_ptr[_col[i]] == _nnz)
-      col_ptr[_col[i]] = i;
+//   for (int i = 0; i < _nnz; i++)
+//     if (col_ptr[_col[i]] == _nnz)
+//       col_ptr[_col[i]] = i;
 
-  for (int i = _n - 1; i >= 0; i--) 
-    if (col_ptr[i] == _nnz)
-      col_ptr[i] = col_ptr[i + 1];
-}
+//   for (int i = _n - 1; i >= 0; i--) 
+//     if (col_ptr[i] == _nnz)
+//       col_ptr[i] = col_ptr[i + 1];
+// }
 
 
 

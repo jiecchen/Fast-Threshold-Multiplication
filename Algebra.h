@@ -145,7 +145,18 @@ public:
     std::copy(A.col_ptr, A.col_ptr + A.n + 1, col_ptr);
   };
 
-  CMatrix_CSC(CVector_iter _val, Index_iter _row, Index_iter _col, int _nnz, int _m,  int _n);
+  CMatrix_CSC(CVector_iter _val, Index_iter _row, Index_iter _col, int _nnz, int _m,  int _n, bool sorted=false) {
+    if (sorted) {
+      this->init(_val, _row, _col, _nnz, _m, _n);
+    }
+    else {
+      CMatrix_COO coo(_m, _n);
+      for (int i = 0; i < _nnz; ++i)
+	coo.push_back(Element(_row[i], _col[i], _val[i]));
+      this->init(coo, sorted);
+    }
+
+  }
   CMatrix_CSC(VAL_TYPE *_val, int *_row, int *_col, int _nnz, int _m,  int _n, bool sorted=false) {
     if (sorted) {
       this->init(_val, _row, _col, _nnz, _m, _n);
@@ -261,7 +272,8 @@ public:
   int *col_ptr;
 
 private:
-  void init(VAL_TYPE *_val, int *_row, int *_col, int _nnz, int _m,  int _n);
+  template<typename T1, typename T2>
+  void init(T1 _val, T2 _row, T2 _col, int _nnz, int _m,  int _n);
 
 };
 
