@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   double theta= 200;
   double rho = 0.1;
 
-  int w = 100;
+  int w = 50;
 
 
 

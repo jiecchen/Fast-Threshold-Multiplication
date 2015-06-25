@@ -7,15 +7,13 @@ CC = g++
 CFLAGS  = -g -O3 -Wall -std=c++0x 
 
 # the build target executable:
-TARGET = test createData test_dblp test_algebra
+TARGET = createData test_dblp test_algebra
 
 #LIBS = -larmadillo
 RM = rm -f
 
 test: test.o Algebra.o Sketch.o sjoin.o
 	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o sjoin.o
-test_dblp: test_dblp.o Algebra.o Sketch.o sjoin.o
-	$(CC) $(CFLAGS) -o test_dblp test_dblp.o Algebra.o Sketch.o sjoin.o
 
 test_algebra: test_algebra.o Algebra.o
 	$(CC) $(CFLAGS) -o test_algebra test_algebra.o Algebra.o
@@ -26,17 +24,14 @@ test_algebra.o: test_algebra.cpp Algebra.h
 sjoin.o: sjoin.h Algebra.h sjoin.cpp 
 	$(CC) $(CFLAGS)  -c sjoin.cpp *.h
 
-test_dblp.o: test_dblp.cpp Algebra.h Sketch.h utils.h
-	$(CC) $(CFLAGS)  -c test_dblp.cpp *.h
+test.o: test.cpp Algebra.h Sketch.h utils.h
+	$(CC) $(CFLAGS)  -c test.cpp *.h
 
 createData: createData.o Algebra.o
 	$(CC) $(CFLAGS) -o createData createData.o Algebra.o
 
 createData.o: createData.cpp Algebra.h
 	$(CC) $(CFLAGS)  -c createData.cpp *.h
-
-test.o: test.cpp Algebra.h Sketch.h utils.h
-	$(CC) $(CFLAGS)  -c test.cpp *.h
 
 Algebra.o: Algebra.h Algebra.cpp
 	$(CC) $(CFLAGS)  -c Algebra.cpp Algebra.h

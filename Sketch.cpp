@@ -13,8 +13,8 @@
 const int _INFINITY = 1 << 30;
 const int MAX_LOGN = 25;
 const int mu = 3;
-const double alpha = 4.;
-int STEP_SIZE = 400; // how many neighbors to be merged
+const double alpha = 1.;
+int STEP_SIZE = 1000; // how many neighbors to be merged
 
 
 //Principle:
