@@ -12,8 +12,11 @@ TARGET = createData test_dblp test_algebra
 #LIBS = -larmadillo
 RM = rm -f
 
-test: test.o Algebra.o Sketch.o sjoin.o
-	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o sjoin.o
+test: test.o Algebra.o Sketch.o sjoin.o similarity_join.o
+	$(CC) $(CFLAGS) -o test test.o Algebra.o Sketch.o sjoin.o similarity_join.o
+
+similarity_join.o: similarity_join.h similarity_join.cpp Algebra.h Sketch.h
+	$(CC) $(CFLAGS)  -c similarity_join.cpp *.h
 
 test_algebra: test_algebra.o Algebra.o
 	$(CC) $(CFLAGS) -o test_algebra test_algebra.o Algebra.o
@@ -24,7 +27,7 @@ test_algebra.o: test_algebra.cpp Algebra.h
 sjoin.o: sjoin.h Algebra.h sjoin.cpp 
 	$(CC) $(CFLAGS)  -c sjoin.cpp *.h
 
-test.o: test.cpp Algebra.h Sketch.h utils.h
+test.o: test.cpp Algebra.h Sketch.h utils.h similarity_join.h
 	$(CC) $(CFLAGS)  -c test.cpp *.h
 
 createData: createData.o Algebra.o
@@ -38,7 +41,7 @@ Algebra.o: Algebra.h Algebra.cpp
 
 
 Sketch.o: Sketch.h Algebra.h utils.h sjoin.h Sketch.cpp
-	$(CC) $(CFLAGS) -c *.h Sketch.cpp
+	$(CC) $(CFLAGS) -c Sketch.cpp *.h 
 
 clean:
 	$(RM) $(TARGET) *~ *.o *.gch

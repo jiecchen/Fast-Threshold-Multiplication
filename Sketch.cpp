@@ -10,12 +10,8 @@
 #include "utils.h"
 #include "sjoin.h"
 
-const int _INFINITY = 1 << 30;
-const int MAX_LOGN = 25;
-const int mu = 3;
-const double alpha = 1.;
-int STEP_SIZE = 1000; // how many neighbors to be merged
 
+const double alpha = 1.;
 
 //Principle:
 //   + each function only do one thing
@@ -31,8 +27,8 @@ VAL_TYPE recover(VAL_TYPE sk[], const CMatrix_CSC &cm, int rw) {
   if (rw >= cm.n)
     return 0;
   VAL_TYPE m = _INFINITY;
-  for (int i = 0; i < mu; ++i) {
-    int r = cm.row[rw * mu + i];
+  for (int i = 0; i < _MU; ++i) {
+    int r = cm.row[rw * _MU + i];
     m = std::min(sk[r], m);
   }
   //  std::cerr << "m = " << m << std::endl;
@@ -62,7 +58,7 @@ void slicing(VAL_TYPE arr[], const CMatrix_CSC& vec) {
 
 // let oldCsc = [R_0; R_1; R_2; R_3; ...]
 // newCsc = [R_0 + R_1; R_2 + R_3; ...]
-CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc, int step_size=STEP_SIZE) {
+CMatrix_CSC mergeNeighbor(const CMatrix_CSC &oldCsc, int step_size) {
   if (oldCsc.nnz <= 0)
     return CMatrix_CSC();
   CVector val;
@@ -172,7 +168,7 @@ int optimalBucketsSize(const CVector& R1, const CMatrix_CSC& Q, double rho, doub
 
   for (unsigned int t = 0; t < R_1.size(); ++t) {
     double _w = 4. * R1[R_1[t + 1].ind] / ((rho + alpha) * theta);
-    double new_cost =  2.9 * R_1[t].val  +  mu * _w * Q_0[t + 1].val;
+    double new_cost =  2.9 * R_1[t].val  +  _MU * _w * Q_0[t + 1].val;
     // std::cerr << R_1[t].val << "  " << R1[R_1[t + 1].ind] << "  " << _w << "  " <<  Q_0[t + 1].val << "  new_cost = " << new_cost << std::endl;
     if (_w < 1)
       _w = 1;
@@ -511,7 +507,7 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   ///////////////////////////////////////////
   CVector val;
   std::vector<int> row, col;
-  VAL_TYPE skCol[w * mu]; // keep extracted column vector
+  VAL_TYPE skCol[w * _MU]; // keep extracted column vector
 
 
   /////////////////////////////////////////////////////
@@ -521,7 +517,7 @@ CMatrix_CSC FastThreshMult_Simple(const CMatrix_CSC &P, const CMatrix_CSC &Q,
 
 
   timer.start("Skech the matrix");
-  CMatrix_CSC CM(createCountMin(w, mu, P.m)); 
+  CMatrix_CSC CM(createCountMin(w, _MU, P.m)); 
   CMatrix_CSC sk((CM * P) * Q);
   timer.stop();
 
@@ -591,7 +587,7 @@ void recursive_recover(CMatrix_COO &res,
 // only return k values if have
 CMatrix_COO recover_column(const std::vector<CMatrix_CSC*>& CMs, 
 			   const std::vector<CMatrix_CSC>& sk, 
-			   int i, double theta, int k = _INFINITY) {
+			   int i, VAL_TYPE theta, int k) {
   CMatrix_COO res;
   VAL_TYPE skCol[CMs[0]->m];
   std::vector<int> ind[MAX_LOGN]; // dyadic structure
@@ -654,14 +650,13 @@ CMatrix_COO recover_column(const std::vector<CMatrix_CSC*>& CMs,
 
 // new version of FastThreshMult
 CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
-			   double theta, double rho, int w) {
+			   VAL_TYPE theta, int w) {
 
 
   CTimer timer;
   // calc L1 norm of P * Q
   CVector&& R1 = calcL1Norm(P, Q);
-  // if (w < 1)
-  //   w = optimalBucketsSize(R1, Q, rho, theta);
+
   
 
 
@@ -676,10 +671,9 @@ CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   timer.start("Group columns");
   std::vector<int> use_exact;
   std::vector<int> use_sketch;
-  //  int k = (int) alpha * w;
-  //  std::cerr << "k = " << k << std::endl;
+
   for (int i = 0; i < Q.n; ++i) { // for column
-    if (R1[i] > (alpha + rho) * w * theta / 4.) // use exact algorithm
+    if (R1[i] > alpha * w * theta / 4.) // use exact algorithm
       use_exact.push_back(i);
     else  // use sketch
       use_sketch.push_back(i);
@@ -740,7 +734,7 @@ CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q,
   timer.start("Create Count-Min Sketch & sketch matrix");
   for (unsigned int i = 0; i < Ps.size(); ++i) {
     // create count min sketch
-    CMs.push_back(new CMatrix_CSC(createCountMin(w, mu, Ps[i]->m)));
+    CMs.push_back(new CMatrix_CSC(createCountMin(w, _MU, Ps[i]->m)));
     sk.push_back( (*CMs[i] * *Ps[i]) * slice );
   }
   timer.stop();
