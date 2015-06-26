@@ -2,58 +2,64 @@
 
 
 
-void buildInvertedIndex(InvertedIndex& inIdx, const CMatrix_CSC& P, const CMatrix_CSC& q, int n) {
-  if (n > P.n)
-    throw "n is too large!";
+// build inverted index incrementally
+InvertedIndex buildInvertedIndex(const CMatrix_CSC& M, int n_prefix, int theta) {
+  if (n_prefix > M.m)
+    throw "n_token is too large!";
+  
+  InvertedIndex result;
 
-  inIdx.clear();
+  for (int i = 0; i < M.n; ++i) {
+    int n_token = M.get_nnz(i) - theta + n_prefix;
 
-  for (int i = 0; i < n; ++i) {
-    int c = q.row[i]; // column of P should be processed
-    for (int j = P.col_ptr[c]; j < P.col_ptr[c + 1]; ++j)
-      inIdx[c].push_back(P.row[j]);
+    if (n_token < n_prefix) // impossible to have similar pairs, skip this column
+      continue;
+
+    for (int j = M.col_ptr[i]; j < M.col_ptr[i + 1]; ++j)
+      if (n_token-- > 0)
+	result[M.row[j]].push_back(i);
+      else 
+	break;
   }
+
+  return result;
 } 
 
 
 
+// each column of M is a data point
+CMatrix_COO prefix_sjoin(const CMatrix_CSC& M, int n_prefix, int theta) {
+  CMatrix_COO result(M.n, M.n); // to keep the result
+  InvertedIndex&& inIdx = buildInvertedIndex(M, n_prefix, theta);
 
-// n-prefix - n-prefix scheme
-// theta - similarity threshold
-CMatrix_COO prefix_sjoin(const CMatrix_CSC& P, const CMatrix_CSC& Q, int n_prefix, int theta) {
-  CMatrix_COO res(P.m, Q.n); // to keep the result
-  CMatrix_CSC&& PT = P.T();
-  //  std::cerr << "Q: " << Q.m << "x" << Q.n << std::endl;
-  for (int i = 0; i < Q.n; ++i) {
-
-    // setup n_token, first n_tokens will be used to build Inverted index
-    int n_token = Q.get_nnz(i) - theta + n_prefix;
-
-    if (n_token < n_prefix) // impossible to have similiar pairs
+  for (int i = 0; i < M.n; ++i) {
+    std::map<int, int> counter;
+    int n_token = M.get_nnz(i) - theta + n_prefix;
+    if (n_token < n_prefix) // impossible to have pairs, skip
       continue;
 
-    InvertedIndex inIdx;
-    buildInvertedIndex(inIdx, P, Q[i], n_token);
+    CMatrix_CSC&& Mi = M[i];
 
-    std::map<int, int> counter;
-    for (auto it = inIdx.begin(); it != inIdx.end(); ++it) {
-      std::vector<int>& vec = it->second;
-      for (auto it_vec = vec.begin(); it_vec != vec.end(); ++it_vec)
-	counter[*it_vec]++;
+    for (int j = M.col_ptr[i]; j < M.col_ptr[i + 1]; ++j) {
+      for (auto it = inIdx[M.row[j]].begin(); it != inIdx[M.row[j]].end(); ++it)
+	counter[*it]++;
     }
-    // not choose candidates and verify
+   
+    // now choose candidates and verify
     for (auto it = counter.begin(); it != counter.end(); ++it)
       if (it->second >= n_prefix) { // it's a legal candidates
-	//TODO, now I assume P = Q^T, try to generalizd it
-	int v = inner_product(PT[it->first], Q[i]);
+	VAL_TYPE v = inner_product(M[it->first], Mi);
 	if (v >= theta) {
-	  res.push_back(Element(it->first, i, v));
+	  result.push_back(Element(it->first, i, v));
 	}
       }
+     
   }
 
-  return res;
+  return result;
 }
+
+
 
 
 

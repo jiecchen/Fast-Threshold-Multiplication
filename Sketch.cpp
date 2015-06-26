@@ -648,129 +648,130 @@ CMatrix_COO recover_column(const std::vector<CMatrix_CSC*>& CMs,
 
 
 
-// new version of FastThreshMult
-CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
-			   VAL_TYPE theta, int w) {
+// // new version of FastThreshMult
+// CMatrix_CSC FastThreshMult_new(const CMatrix_CSC &P, const CMatrix_CSC &Q, 
+// 			   VAL_TYPE theta, int w) {
 
 
-  CTimer timer;
-  // calc L1 norm of P * Q
-  CVector&& R1 = calcL1Norm(P, Q);
-
+//   CTimer timer;
+//   // calc L1 norm of P * Q
+//   CVector&& R1 = calcL1Norm(P, Q);
+//   //   w = optimalBucketsSize(R1, Q, rho, theta);
   
 
 
   
-  ///////////////////////////////////////////
-  // recover heavy entries
-  ///////////////////////////////////////////
-  CVector val;
-  std::vector<int> row, col;
+//   ///////////////////////////////////////////
+//   // recover heavy entries
+//   ///////////////////////////////////////////
+//   CVector val;
+//   std::vector<int> row, col;
 
 
-  timer.start("Group columns");
-  std::vector<int> use_exact;
-  std::vector<int> use_sketch;
+//   timer.start("Group columns");
+//   std::vector<int> use_exact;
+//   std::vector<int> use_sketch;
+//   //  int k = (int) alpha * w;
+//   //  std::cerr << "k = " << k << std::endl;
+//   for (int i = 0; i < Q.n; ++i) { // for column
+//     if (R1[i] > alpha * w * theta / 4.) // use exact algorithm
+//       use_exact.push_back(i);
+//     else  // use sketch
+//       use_sketch.push_back(i);
+//   }
+//   timer.stop();
 
-  for (int i = 0; i < Q.n; ++i) { // for column
-    if (R1[i] > alpha * w * theta / 4.) // use exact algorithm
-      use_exact.push_back(i);
-    else  // use sketch
-      use_sketch.push_back(i);
-  }
-  timer.stop();
-
-  std::cerr << use_exact.size() << " columns use Naive, " << use_sketch.size()
-	    << " columns use Sketch." << std::endl;
+//   std::cerr << use_exact.size() << " columns use Naive, " << use_sketch.size()
+// 	    << " columns use Sketch." << std::endl;
   
  
-  //////////////////////////////////////////////////////
-  ///////////////// Using exact algo ///////////////////
-  //////////////////////////////////////////////////////
-  timer.start("Use exact algo");
-  // CMatrix_CSC&& res = P * Q[use_exact];
-  // for (unsigned int i = 0; i < use_exact.size(); ++i) {
-  //   for (int j = res.col_ptr[i]; j < res.col_ptr[i + 1]; ++j) 
-  //     if (res.val[j] >= theta) {
-  // 	val.push_back(res.val[j]);
-  // 	row.push_back(res.row[j]);
-  // 	col.push_back(use_exact[i]);
-  //     }      
-  // }
-  int n_prefix = 20;
-  CMatrix_COO &&res = prefix_sjoin(P, Q[use_exact], n_prefix, theta);
-  // slicing
-  for (int i = 0; i < res.size(); ++i) {
-    val.push_back(res[i].val);
-    row.push_back(res[i].row);
-    col.push_back(use_exact[res[i].col]);
-  }
-  timer.stop();
+//   //////////////////////////////////////////////////////
+//   ///////////////// Using exact algo ///////////////////
+//   //////////////////////////////////////////////////////
+//   timer.start("Use exact algo");
+//   // CMatrix_CSC&& res = P * Q[use_exact];
+//   // for (unsigned int i = 0; i < use_exact.size(); ++i) {
+//   //   for (int j = res.col_ptr[i]; j < res.col_ptr[i + 1]; ++j) 
+//   //     if (res.val[j] >= theta) {
+//   // 	val.push_back(res.val[j]);
+//   // 	row.push_back(res.row[j]);
+//   // 	col.push_back(use_exact[i]);
+//   //     }      
+//   // }
+//   int n_prefix = 20;
+//   CMatrix_COO &&res = prefix_sjoin(P, Q[use_exact], n_prefix, theta);
+//   // slicing
+//   for (int i = 0; i < res.size(); ++i) {
+//     val.push_back(res[i].val);
+//     row.push_back(res[i].row);
+//     col.push_back(use_exact[res[i].col]);
+//   }
+//   timer.stop();
 
 
 
 
-  /////////////////////////////////////////////////////
-  /////////////  Using sketch /////////////////////////
-  /////////////////////////////////////////////////////
-  timer.start("Use sketch");
+//   /////////////////////////////////////////////////////
+//   /////////////  Using sketch /////////////////////////
+//   /////////////////////////////////////////////////////
+//   timer.start("Use sketch");
 
-  // create Ps[..] by merging neighbors
-  std::vector<CMatrix_CSC*> Ps; // keep merged matrices
-  timer.start("Merging matrix ...");
-  Ps.push_back(new CMatrix_CSC(P));
-  while (Ps.back()->m > 1) {
-    Ps.push_back(new CMatrix_CSC(mergeNeighbor(*Ps.back())));
-  }
-  timer.stop();
+//   // create Ps[..] by merging neighbors
+//   std::vector<CMatrix_CSC*> Ps; // keep merged matrices
+//   timer.start("Merging matrix ...");
+//   Ps.push_back(new CMatrix_CSC(P));
+//   while (Ps.back()->m > 1) {
+//     Ps.push_back(new CMatrix_CSC(mergeNeighbor(*Ps.back())));
+//   }
+//   timer.stop();
 
   
 
-  CMatrix_CSC&& PT = P.T();   // transpose P, for later use
-  CMatrix_CSC&& slice = Q[use_sketch];
-  std::vector<CMatrix_CSC> sk; // to sketched matrix
-  std::vector<CMatrix_CSC*> CMs; // to keep count-min matrices
+//   CMatrix_CSC&& PT = P.T();   // transpose P, for later use
+//   CMatrix_CSC&& slice = Q[use_sketch];
+//   std::vector<CMatrix_CSC> sk; // to sketched matrix
+//   std::vector<CMatrix_CSC*> CMs; // to keep count-min matrices
 
-  timer.start("Create Count-Min Sketch & sketch matrix");
-  for (unsigned int i = 0; i < Ps.size(); ++i) {
-    // create count min sketch
-    CMs.push_back(new CMatrix_CSC(createCountMin(w, _MU, Ps[i]->m)));
-    sk.push_back( (*CMs[i] * *Ps[i]) * slice );
-  }
-  timer.stop();
+//   timer.start("Create Count-Min Sketch & sketch matrix");
+//   for (unsigned int i = 0; i < Ps.size(); ++i) {
+//     // create count min sketch
+//     CMs.push_back(new CMatrix_CSC(createCountMin(w, _MU, Ps[i]->m)));
+//     sk.push_back( (*CMs[i] * *Ps[i]) * slice );
+//   }
+//   timer.stop();
 
 
    
 
-  timer.start("Now do recovering");
+//   timer.start("Now do recovering");
 
-  for (unsigned int i = 0; i < use_sketch.size(); ++i) {
-    CMatrix_COO&& res = recover_column(CMs, sk, i, theta);
-    for (int j = 0; j < res.size(); ++j) {
-      CMatrix_CSC&& Qi = Q[use_sketch[i]];
-      VAL_TYPE v = inner_product(PT[res[j].row], Qi);
-      if (v >= theta) {
-	val.push_back(v);
-	row.push_back(res[j].row);
-	col.push_back(use_sketch[i]);
-      }
-    }
-  }
+//   for (unsigned int i = 0; i < use_sketch.size(); ++i) {
+//     CMatrix_COO&& res = recover_column(CMs, sk, i, theta);
+//     for (int j = 0; j < res.size(); ++j) {
+//       CMatrix_CSC&& Qi = Q[use_sketch[i]];
+//       VAL_TYPE v = inner_product(PT[res[j].row], Qi);
+//       if (v >= theta) {
+// 	val.push_back(v);
+// 	row.push_back(res[j].row);
+// 	col.push_back(use_sketch[i]);
+//       }
+//     }
+//   }
 
-  timer.stop();
+//   timer.stop();
 
-  timer.stop(); // use sketch
+//   timer.stop(); // use sketch
 
 
-  // release memory
-  for (unsigned int i = 0; i < Ps.size(); ++i) {
-    delete Ps[i];
-    delete CMs[i];
-  }
+//   // release memory
+//   for (unsigned int i = 0; i < Ps.size(); ++i) {
+//     delete Ps[i];
+//     delete CMs[i];
+//   }
 
   
-  return  CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
-}
+//   return  CMatrix_CSC(val.begin(), row.begin(), col.begin(), val.size(), P.m, Q.n);
+// }
 
 
 

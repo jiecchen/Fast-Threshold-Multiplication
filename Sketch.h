@@ -3,10 +3,10 @@
 #include "Algebra.h"
 #include <vector>
 
-const int STEP_SIZE = 2; // how many neighbors to be merged
+const int STEP_SIZE = 20; // how many neighbors to be merged
 const VAL_TYPE _INFINITY = 1 << 30;
 const int MAX_LOGN = 25;
-const int _MU = 3;
+const int _MU = 2;
 
 
 /////////////////////////////////////////////////////////////////////////
